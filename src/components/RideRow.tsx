@@ -1,6 +1,8 @@
 import { Ride, SessionType } from '@/types'
 import { formatDuration } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import Link from 'next/link'
+import { ChevronRight } from 'lucide-react'
 
 const sessionColors: Record<SessionType, string> = {
   threshold:  'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
@@ -23,13 +25,16 @@ export function RideRow({ ride }: RideRowProps) {
   })
 
   return (
-    <div className="flex items-center gap-3 py-3 border-b last:border-0">
+    <Link
+      href={`/ride/${ride.strava_id}`}
+      className="flex items-center gap-3 py-3 border-b last:border-0 hover:bg-muted/40 -mx-4 px-4 transition-colors group"
+    >
       {/* Date */}
       <div className="w-24 shrink-0 text-xs text-muted-foreground">{dateStr}</div>
 
       {/* Label + type */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{ride.label}</p>
+        <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">{ride.label}</p>
         <span className={cn('inline-block mt-0.5 text-xs px-1.5 py-0.5 rounded-full font-medium', sessionColors[ride.session_type])}>
           {ride.session_type.replace('_', ' ')}
         </span>
@@ -62,6 +67,8 @@ export function RideRow({ ride }: RideRowProps) {
           </div>
         )}
       </div>
-    </div>
+
+      <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0 group-hover:text-primary transition-colors" />
+    </Link>
   )
 }

@@ -32,6 +32,11 @@ export function getRecentRides(limit = 20): Ride[] {
     .slice(0, limit)
 }
 
+export function getRideById(stravaId: string): Ride | null {
+  const all = readNdjson<Ride>(path.join(MEMORY, 'rides.ndjson'))
+  return all.find((r) => r.strava_id === stravaId) ?? null
+}
+
 export function getPeakPower(): PeakPowerRecord[] {
   return readNdjson<PeakPowerRecord>(path.join(MEMORY, 'peak_power.ndjson'))
 }
@@ -47,3 +52,4 @@ export function getLoadChartData(days = 60) {
 }
 
 export { formatDuration, formatSleep } from './format'
+export { getTitiDaysRemaining } from './titi'

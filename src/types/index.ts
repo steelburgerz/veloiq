@@ -32,6 +32,29 @@ export interface ReadinessEntry {
   }
 }
 
+export interface KeyBlock {
+  label: string
+  count: number
+  duration_sec: number
+  avg_power_w: number | null
+  power_pct_ftp: number | null
+  avg_hr_bpm: number | null
+  avg_cadence_rpm: number | null
+  zone: string | null
+  source: string
+}
+
+export interface ZonesSec {
+  Z1?: number
+  Z2?: number
+  Z3?: number
+  Z4?: number
+  Z5?: number
+  Z6?: number
+  Z7?: number
+  SS?: number
+}
+
 export interface Ride {
   date: string
   source: string
@@ -56,6 +79,8 @@ export interface Ride {
   tsb: number | null
   if: number | null
   tss: number | null
+  zones_power_sec: ZonesSec | null
+  key_blocks: KeyBlock[] | null
 }
 
 export interface PeakPowerRecord {
