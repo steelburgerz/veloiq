@@ -58,16 +58,14 @@ export interface Ride {
   tss: number | null
 }
 
-export interface PeakPowerEntry {
+export interface PeakPowerRecord {
   period: string
-  entries: {
-    duration_sec: number
-    power_w: number
-    power_wkg: number
-    date: string
-    source: string
-    activity_label: string
-  }[]
+  duration_sec: number
+  power_w: number
+  power_wkg: number
+  date: string
+  source: string
+  activity_label: string
 }
 
 export interface LoadChartPoint {

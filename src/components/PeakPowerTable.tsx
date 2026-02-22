@@ -1,18 +1,18 @@
-import { PeakPowerEntry } from '@/types'
+import { PeakPowerRecord } from '@/types'
 import { cn } from '@/lib/utils'
 
 const DURATION_LABELS: Record<number, string> = {
   5: '5s', 15: '15s', 30: '30s', 60: '1min',
   120: '2min', 300: '5min', 600: '10min',
-  1200: '20min', 2400: '40min', 3600: '1hr'
+  1200: '20min', 1800: '30min', 2400: '40min', 3600: '1hr'
 }
 
 interface PeakPowerTableProps {
-  data: PeakPowerEntry
+  records: PeakPowerRecord[]
 }
 
-export function PeakPowerTable({ data }: PeakPowerTableProps) {
-  const sorted = [...data.entries].sort((a, b) => a.duration_sec - b.duration_sec)
+export function PeakPowerTable({ records }: PeakPowerTableProps) {
+  const sorted = [...records].sort((a, b) => a.duration_sec - b.duration_sec)
 
   return (
     <div className="overflow-x-auto">

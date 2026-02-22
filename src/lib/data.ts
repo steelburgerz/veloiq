@@ -1,7 +1,7 @@
 import 'server-only'
 import fs from 'fs'
 import path from 'path'
-import { ReadinessEntry, Ride, PeakPowerEntry } from '@/types'
+import { ReadinessEntry, Ride, PeakPowerRecord } from '@/types'
 
 const WORKSPACE = path.resolve(process.env.WHEELMATE_WORKSPACE ?? '/Users/ralphkoh/.openclaw/workspace')
 const MEMORY = path.join(WORKSPACE, 'memory')
@@ -32,10 +32,8 @@ export function getRecentRides(limit = 20): Ride[] {
     .slice(0, limit)
 }
 
-export function getPeakPower(): PeakPowerEntry | null {
-  const all = readNdjson<PeakPowerEntry>(path.join(MEMORY, 'peak_power.ndjson'))
-  if (!all.length) return null
-  return all[all.length - 1]
+export function getPeakPower(): PeakPowerRecord[] {
+  return readNdjson<PeakPowerRecord>(path.join(MEMORY, 'peak_power.ndjson'))
 }
 
 export function getLoadChartData(days = 60) {

@@ -93,10 +93,10 @@ export default async function DashboardPage() {
               Peak Power Records
             </h2>
             <div className="rounded-2xl border px-4 py-2">
-              {peakPower ? (
+              {peakPower.length > 0 ? (
                 <>
-                  <PeakPowerTable data={peakPower} />
-                  <p className="text-xs text-muted-foreground mt-3 pb-2">Period: {peakPower.period}</p>
+                  <PeakPowerTable records={peakPower} />
+                  <p className="text-xs text-muted-foreground mt-3 pb-2">Period: {peakPower[0].period}</p>
                 </>
               ) : (
                 <div className="py-10 text-center text-muted-foreground text-sm">No peak power data yet</div>

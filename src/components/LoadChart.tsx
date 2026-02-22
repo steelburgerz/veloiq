@@ -18,8 +18,8 @@ function formatDate(dateStr: unknown) {
 
 export function LoadChart({ data }: LoadChartProps) {
   return (
-    <div className="w-full h-64">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="w-full" style={{ height: 256 }}>
+      <ResponsiveContainer width="100%" height={256}>
         <LineChart data={data} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
           <XAxis
