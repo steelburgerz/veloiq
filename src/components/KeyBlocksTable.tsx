@@ -1,26 +1,47 @@
 import { KeyBlock } from '@/types'
 import { cn } from '@/lib/utils'
-import { formatDuration } from '@/lib/format'
 
-const ZONE_COLORS: Record<string, string> = {
-  Z1: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
-  Z2: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
-  Z3: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
-  'Z3-4': 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300',
-  Z4: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300',
-  Z5: 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300',
-  'Z5-6': 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
-  Z6: 'bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-200',
-  Z7: 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300',
-  SS: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300',
+const ZONE_BAR_COLOR: Record<string, string> = {
+  Z1: 'bg-slate-400',
+  Z2: 'bg-blue-400',
+  Z3: 'bg-emerald-400',
+  'Z3-4': 'bg-green-500',
+  Z4: 'bg-yellow-400',
+  Z5: 'bg-orange-400',
+  'Z5-6': 'bg-red-400',
+  Z6: 'bg-red-500',
+  Z7: 'bg-purple-500',
+  SS: 'bg-indigo-400',
 }
 
-function pctToColor(pct: number | null): string {
-  if (pct === null) return 'text-muted-foreground'
-  if (pct >= 1.06) return 'text-purple-600 dark:text-purple-400 font-bold'
-  if (pct >= 0.91) return 'text-yellow-600 dark:text-yellow-400 font-semibold'
-  if (pct >= 0.76) return 'text-emerald-600 dark:text-emerald-400'
-  return 'text-blue-500 dark:text-blue-400'
+const ZONE_TEXT: Record<string, string> = {
+  Z1: 'text-slate-500',
+  Z2: 'text-blue-600 dark:text-blue-400',
+  Z3: 'text-emerald-600 dark:text-emerald-400',
+  'Z3-4': 'text-green-600 dark:text-green-400',
+  Z4: 'text-yellow-600 dark:text-yellow-400',
+  Z5: 'text-orange-500 dark:text-orange-400',
+  'Z5-6': 'text-red-500',
+  Z6: 'text-red-600 dark:text-red-400',
+  Z7: 'text-purple-600 dark:text-purple-400',
+  SS: 'text-indigo-600 dark:text-indigo-400',
+}
+
+function pctLabel(pct: number | null): { text: string; cls: string } {
+  if (pct === null) return { text: '—', cls: 'text-muted-foreground' }
+  if (pct >= 1.2)  return { text: `${Math.round(pct * 100)}%`, cls: 'text-purple-600 dark:text-purple-400 font-bold' }
+  if (pct >= 1.06) return { text: `${Math.round(pct * 100)}%`, cls: 'text-red-500 font-semibold' }
+  if (pct >= 0.91) return { text: `${Math.round(pct * 100)}%`, cls: 'text-yellow-600 dark:text-yellow-400 font-semibold' }
+  if (pct >= 0.76) return { text: `${Math.round(pct * 100)}%`, cls: 'text-emerald-600 dark:text-emerald-400' }
+  return { text: `${Math.round(pct * 100)}%`, cls: 'text-blue-500 dark:text-blue-400' }
+}
+
+function fmtDur(sec: number): string {
+  const m = Math.floor(sec / 60)
+  const s = sec % 60
+  if (m === 0) return `${s}s`
+  if (s === 0) return `${m}m`
+  return `${m}m${s}s`
 }
 
 interface KeyBlocksTableProps {
@@ -29,89 +50,108 @@ interface KeyBlocksTableProps {
 }
 
 export function KeyBlocksTable({ blocks, ftp = 270 }: KeyBlocksTableProps) {
+  const maxPower = Math.max(...blocks.map(b => b.avg_power_w ?? 0), ftp)
+
   return (
-    <div className="space-y-2">
+    <div className="rounded-2xl border overflow-hidden">
+      {/* Header */}
+      <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-x-4 px-4 py-2 bg-muted/40 border-b text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <span>Block</span>
+        <span className="text-right">Dur</span>
+        <span className="text-right">Watts</span>
+        <span className="text-right">% FTP</span>
+        <span className="text-right hidden sm:block">HR</span>
+        <span className="text-right hidden sm:block">Cad</span>
+      </div>
+
+      {/* Rows */}
       {blocks.map((block, i) => {
-        const zoneCls = block.zone ? (ZONE_COLORS[block.zone] ?? ZONE_COLORS['Z3']) : ZONE_COLORS['Z3']
         const pct = block.power_pct_ftp
+        const { text: pctText, cls: pctCls } = pctLabel(pct)
+        const barColor = block.zone ? (ZONE_BAR_COLOR[block.zone] ?? 'bg-slate-400') : 'bg-slate-400'
+        const zoneText = block.zone ? (ZONE_TEXT[block.zone] ?? 'text-muted-foreground') : 'text-muted-foreground'
+        const barWidth = block.avg_power_w ? Math.min(100, (block.avg_power_w / maxPower) * 100) : 0
         const totalSec = block.duration_sec * block.count
+
         return (
-          <div key={i} className="rounded-xl border p-4 space-y-3">
-            {/* Header */}
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="font-semibold text-sm capitalize">{block.label}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  {block.zone && (
-                    <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', zoneCls)}>
-                      {block.zone}
-                    </span>
-                  )}
-                  {block.count > 1 && (
-                    <span className="text-xs text-muted-foreground">{block.count}×</span>
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    {formatDuration(block.duration_sec / 60)} each
-                    {block.count > 1 ? ` · ${formatDuration(totalSec / 60)} total` : ''}
+          <div
+            key={i}
+            className={cn(
+              'grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-x-4 px-4 py-2.5 border-b last:border-0 items-center',
+              'hover:bg-muted/30 transition-colors'
+            )}
+          >
+            {/* Label + zone + power bar */}
+            <div className="min-w-0 space-y-1">
+              <div className="flex items-center gap-2">
+                {block.zone && (
+                  <span className={cn('text-xs font-bold tabular-nums shrink-0', zoneText)}>
+                    {block.zone}
                   </span>
-                </div>
+                )}
+                <span className="text-sm truncate">{block.label}</span>
+                {block.count > 1 && (
+                  <span className="text-xs text-muted-foreground shrink-0">{block.count}×</span>
+                )}
               </div>
-              {pct !== null && (
-                <div className="text-right shrink-0">
-                  <p className={cn('text-lg font-bold', pctToColor(pct))}>
-                    {Math.round(pct * 100)}%
-                  </p>
-                  <p className="text-xs text-muted-foreground">of FTP</p>
-                </div>
-              )}
-            </div>
-
-            {/* Metrics row */}
-            <div className="grid grid-cols-3 gap-2 text-center">
+              {/* Inline power bar */}
               {block.avg_power_w !== null && (
-                <div className="rounded-lg bg-muted/50 p-2">
-                  <p className="text-base font-bold">{block.avg_power_w}W</p>
-                  <p className="text-xs text-muted-foreground">Avg Power</p>
-                </div>
-              )}
-              {block.avg_hr_bpm !== null && (
-                <div className="rounded-lg bg-muted/50 p-2">
-                  <p className="text-base font-bold">{block.avg_hr_bpm}</p>
-                  <p className="text-xs text-muted-foreground">Avg HR</p>
-                </div>
-              )}
-              {block.avg_cadence_rpm !== null && (
-                <div className="rounded-lg bg-muted/50 p-2">
-                  <p className="text-base font-bold">{block.avg_cadence_rpm}</p>
-                  <p className="text-xs text-muted-foreground">Cadence</p>
-                </div>
-              )}
-            </div>
-
-            {/* Power bar relative to FTP */}
-            {block.avg_power_w !== null && (
-              <div>
-                <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                  <span>0W</span>
-                  <span className="text-foreground font-medium">{ftp}W FTP</span>
-                  <span>{Math.round(ftp * 1.2)}W</span>
-                </div>
-                <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div className="h-1 rounded-full bg-muted overflow-hidden w-full max-w-[180px]">
                   <div
-                    className={cn(
-                      'h-full rounded-full transition-all',
-                      pct && pct >= 1.06 ? 'bg-purple-500' :
-                      pct && pct >= 0.91 ? 'bg-yellow-500' :
-                      pct && pct >= 0.76 ? 'bg-emerald-500' : 'bg-blue-400'
-                    )}
-                    style={{ width: `${Math.min(100, (block.avg_power_w / (ftp * 1.2)) * 100)}%` }}
+                    className={cn('h-full rounded-full', barColor)}
+                    style={{ width: `${barWidth}%` }}
                   />
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            {/* Duration */}
+            <div className="text-right tabular-nums">
+              <span className="text-sm font-medium">{fmtDur(block.duration_sec)}</span>
+              {block.count > 1 && (
+                <p className="text-xs text-muted-foreground">{fmtDur(totalSec)} tot</p>
+              )}
+            </div>
+
+            {/* Watts */}
+            <div className="text-right tabular-nums">
+              {block.avg_power_w !== null
+                ? <span className="text-sm font-bold">{block.avg_power_w}W</span>
+                : <span className="text-muted-foreground">—</span>
+              }
+            </div>
+
+            {/* % FTP */}
+            <div className={cn('text-right tabular-nums text-sm', pctCls)}>
+              {pctText}
+            </div>
+
+            {/* HR — hidden on mobile */}
+            <div className="text-right tabular-nums hidden sm:block">
+              {block.avg_hr_bpm !== null
+                ? <span className="text-sm text-muted-foreground">{block.avg_hr_bpm}</span>
+                : <span className="text-muted-foreground/40">—</span>
+              }
+            </div>
+
+            {/* Cadence — hidden on mobile */}
+            <div className="text-right tabular-nums hidden sm:block">
+              {block.avg_cadence_rpm !== null
+                ? <span className="text-sm text-muted-foreground">{block.avg_cadence_rpm}</span>
+                : <span className="text-muted-foreground/40">—</span>
+              }
+            </div>
           </div>
         )
       })}
+
+      {/* Footer — FTP reference */}
+      <div className="px-4 py-2 bg-muted/20 flex items-center gap-4 text-xs text-muted-foreground">
+        <span>FTP: <span className="font-semibold text-foreground">{ftp}W</span></span>
+        <span className="flex items-center gap-1"><span className="h-1.5 w-3 rounded-full bg-emerald-400 inline-block" /> Z3 76–90%</span>
+        <span className="flex items-center gap-1"><span className="h-1.5 w-3 rounded-full bg-yellow-400 inline-block" /> Z4 91–105%</span>
+        <span className="flex items-center gap-1"><span className="h-1.5 w-3 rounded-full bg-red-500 inline-block" /> Z5+ &gt;106%</span>
+      </div>
     </div>
   )
 }
