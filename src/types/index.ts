@@ -80,7 +80,19 @@ export interface Ride {
   if: number | null
   tss: number | null
   zones_power_sec: ZonesSec | null
+  zones_hr_sec: ZonesSec | null
   key_blocks: KeyBlock[] | null
+  // Performance metrics
+  decoupling_pct: number | null
+  efficiency_factor: number | null
+  variability_index: number | null
+  polarization_index: number | null
+  lr_balance: string | null
+  // Environmental
+  avg_temp_c: number | null
+  max_temp_c: number | null
+  // Nutrition
+  carbs_used_g: number | null
 }
 
 export interface PeakPowerRecord {
@@ -93,9 +105,29 @@ export interface PeakPowerRecord {
   activity_label: string
 }
 
+export interface WkgCheckpoint {
+  date: string
+  weight_kg: number
+  ftp_w: number
+  ftp_wkg: number
+  notes: string | null
+}
+
 export interface LoadChartPoint {
   date: string
   ctl: number
   atl: number
   tsb: number
+}
+
+export interface WeekSummary {
+  weekLabel: string
+  startDate: string
+  endDate: string
+  rides: Ride[]
+  totalHours: number
+  totalDistance: number
+  totalLoad: number
+  totalElev: number
+  avgTSB: number | null
 }

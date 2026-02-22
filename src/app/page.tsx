@@ -1,10 +1,12 @@
-import { getTodayReadiness, getRecentRides, getPeakPower, getLoadChartData } from '@/lib/data'
+import { getTodayReadiness, getRecentRides, getPeakPower, getLoadChartData, getWeekSummaries, getWkgCheckpoints } from '@/lib/data'
 import { getTitiDaysRemaining } from '@/lib/titi'
 import { ReadinessCard } from '@/components/ReadinessCard'
 import { RideRow } from '@/components/RideRow'
 import { TitiCountdown } from '@/components/TitiCountdown'
 import { PeakPowerTable } from '@/components/PeakPowerTable'
 import { LoadChart } from '@/components/LoadChart'
+import { WeekSummaryStrip } from '@/components/WeekSummaryStrip'
+import { WkgChart } from '@/components/WkgChart'
 import { Bike, Zap } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -15,6 +17,11 @@ export default async function DashboardPage() {
   const peakPower = getPeakPower()
   const chartData = getLoadChartData(60)
   const daysToTiti = getTitiDaysRemaining()
+  const weeks = getWeekSummaries(6)
+  const wkgCheckpoints = getWkgCheckpoints()
+
+  // Current week stats
+  const thisWeek = weeks[0]
 
   return (
     <div className="min-h-screen bg-background">
@@ -53,21 +60,58 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Load chart */}
+        {/* Weekly summary strip */}
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Training Load — 60 days</h2>
-          <div className="rounded-2xl border p-5">
-            {chartData.length > 0 ? (
-              <LoadChart data={chartData} />
-            ) : (
-              <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">
-                No load data available
-              </div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Weekly Summary</h2>
+            {thisWeek && (
+              <span className="text-xs text-muted-foreground">
+                This week: <span className="font-semibold text-foreground">{thisWeek.totalHours}h · {thisWeek.totalDistance}km · {thisWeek.totalLoad} load</span>
+              </span>
             )}
-            <div className="flex gap-6 mt-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5"><span className="h-2 w-4 rounded-full bg-indigo-500 inline-block" />CTL (Fitness)</div>
-              <div className="flex items-center gap-1.5"><span className="h-2 w-4 rounded-full bg-amber-500 inline-block" />ATL (Fatigue)</div>
-              <div className="flex items-center gap-1.5"><span className="h-2 w-4 rounded-full bg-green-500 inline-block" />TSB (Form)</div>
+          </div>
+          <WeekSummaryStrip weeks={weeks} />
+        </div>
+
+        {/* Load chart + W/kg trend */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Training Load — 60 days</h2>
+            <div className="rounded-2xl border p-5">
+              {chartData.length > 0 ? (
+                <LoadChart data={chartData} />
+              ) : (
+                <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">No load data</div>
+              )}
+              <div className="flex gap-6 mt-4 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5"><span className="h-2 w-4 rounded-full bg-indigo-500 inline-block" />CTL</div>
+                <div className="flex items-center gap-1.5"><span className="h-2 w-4 rounded-full bg-amber-500 inline-block" />ATL</div>
+                <div className="flex items-center gap-1.5"><span className="h-2 w-4 rounded-full bg-green-500 inline-block" />TSB</div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+              W/kg Progression
+              {wkgCheckpoints.length > 0 && (
+                <span className="ml-2 text-foreground font-bold normal-case text-sm">
+                  {wkgCheckpoints[wkgCheckpoints.length - 1].ftp_wkg.toFixed(2)} W/kg
+                </span>
+              )}
+            </h2>
+            <div className="rounded-2xl border p-5">
+              {wkgCheckpoints.length > 0 ? (
+                <>
+                  <WkgChart checkpoints={wkgCheckpoints} targetWkg={3.86} />
+                  <p className="text-xs text-muted-foreground mt-3">
+                    Current FTP: <span className="font-semibold text-foreground">{wkgCheckpoints[wkgCheckpoints.length - 1].ftp_w}W</span>
+                    {' · '}Target: <span className="font-semibold text-green-600">3.86+ W/kg for TiTi</span>
+                  </p>
+                </>
+              ) : (
+                <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">No W/kg data yet</div>
+              )}
             </div>
           </div>
         </div>

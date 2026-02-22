@@ -1,8 +1,10 @@
 import { getRideById } from '@/lib/data'
 import { formatDuration } from '@/lib/format'
 import { ZoneChart } from '@/components/ZoneChart'
+import { HrZoneChart } from '@/components/HrZoneChart'
 import { KeyBlocksTable } from '@/components/KeyBlocksTable'
 import { RideAnalysis } from '@/components/RideAnalysis'
+import { RideMetrics } from '@/components/RideMetrics'
 import { SessionType } from '@/types'
 import { ArrowLeft, Bike, Zap, Heart, Timer, Mountain, Flame, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -33,23 +35,27 @@ export default async function RidePage({ params }: PageProps) {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   })
 
-  const totalZoneSec = ride.zones_power_sec
+  const totalZonePowerSec = ride.zones_power_sec
     ? Object.values(ride.zones_power_sec).reduce((s, v) => s + (v ?? 0), 0)
     : 0
 
+  const totalZoneHrSec = ride.zones_hr_sec
+    ? Object.values(ride.zones_hr_sec).reduce((s, v) => s + (v ?? 0), 0)
+    : 0
+
   const statCards = [
-    { icon: Timer,     label: 'Duration',    value: formatDuration(ride.duration_min) },
-    { icon: Bike,      label: 'Distance',    value: `${ride.distance_km.toFixed(1)}km` },
-    { icon: Mountain,  label: 'Elevation',   value: `${ride.elev_m}m` },
-    { icon: Zap,       label: 'NP',          value: ride.np_w ? `${ride.np_w}W` : '—' },
-    { icon: Zap,       label: 'Avg Power',   value: ride.avg_power_w ? `${ride.avg_power_w}W` : '—' },
-    { icon: Zap,       label: 'Max Power',   value: ride.max_power_w ? `${ride.max_power_w}W` : '—' },
-    { icon: Heart,     label: 'Avg HR',      value: ride.avg_hr_bpm ? `${ride.avg_hr_bpm}bpm` : '—' },
-    { icon: Heart,     label: 'Max HR',      value: ride.max_hr_bpm ? `${ride.max_hr_bpm}bpm` : '—' },
-    { icon: Flame,     label: 'Work',        value: `${ride.work_kj}kJ` },
-    { icon: TrendingUp,label: 'Load',        value: ride.intervals_load ? `${ride.intervals_load}` : '—' },
-    { icon: TrendingUp,label: 'IF',          value: ride.if ? ride.if.toFixed(2) : '—' },
-    { icon: TrendingUp,label: 'TSB',         value: ride.tsb !== null && ride.tsb !== undefined ? `${ride.tsb > 0 ? '+' : ''}${ride.tsb.toFixed(1)}` : '—' },
+    { icon: Timer,      label: 'Duration',  value: formatDuration(ride.duration_min) },
+    { icon: Bike,       label: 'Distance',  value: `${ride.distance_km.toFixed(1)}km` },
+    { icon: Mountain,   label: 'Elevation', value: `${ride.elev_m}m` },
+    { icon: Zap,        label: 'NP',        value: ride.np_w ? `${ride.np_w}W` : '—' },
+    { icon: Zap,        label: 'Avg Power', value: ride.avg_power_w ? `${ride.avg_power_w}W` : '—' },
+    { icon: Zap,        label: 'Max Power', value: ride.max_power_w ? `${ride.max_power_w}W` : '—' },
+    { icon: Heart,      label: 'Avg HR',    value: ride.avg_hr_bpm ? `${ride.avg_hr_bpm}bpm` : '—' },
+    { icon: Heart,      label: 'Max HR',    value: ride.max_hr_bpm ? `${ride.max_hr_bpm}bpm` : '—' },
+    { icon: Flame,      label: 'Work',      value: `${ride.work_kj}kJ` },
+    { icon: TrendingUp, label: 'Load',      value: ride.intervals_load ? `${ride.intervals_load}` : '—' },
+    { icon: TrendingUp, label: 'IF',        value: ride.if ? ride.if.toFixed(2) : '—' },
+    { icon: TrendingUp, label: 'TSB',       value: ride.tsb != null ? `${ride.tsb > 0 ? '+' : ''}${ride.tsb.toFixed(1)}` : '—' },
   ]
 
   return (
@@ -74,13 +80,21 @@ export default async function RidePage({ params }: PageProps) {
 
         {/* Header */}
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
             <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', sessionColors[ride.session_type])}>
               {ride.session_type.replace('_', ' ')}
             </span>
             {ride.detail_quality === 'full-interval' && (
               <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
                 Full data
+              </span>
+            )}
+            {ride.avg_temp_c && (
+              <span className={cn(
+                'text-xs px-2 py-0.5 rounded-full font-medium',
+                ride.avg_temp_c > 30 ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
+              )}>
+                🌡️ {ride.avg_temp_c.toFixed(0)}°C
               </span>
             )}
             <a
@@ -113,23 +127,38 @@ export default async function RidePage({ params }: PageProps) {
           <RideAnalysis ride={ride} />
         </div>
 
+        {/* Performance + Environmental metrics */}
+        <RideMetrics ride={ride} />
+
         {/* Key blocks */}
         {ride.key_blocks && ride.key_blocks.length > 0 && (
           <div>
             <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-              Key Blocks <span className="text-foreground/50 font-normal normal-case">({ride.key_blocks.length})</span>
+              Key Blocks <span className="text-foreground/40 font-normal normal-case">({ride.key_blocks.length})</span>
             </h2>
             <KeyBlocksTable blocks={ride.key_blocks} ftp={270} />
           </div>
         )}
 
-        {/* Zone distribution */}
-        {ride.zones_power_sec && totalZoneSec > 0 && (
-          <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Power Zone Distribution</h2>
-            <div className="rounded-2xl border p-5">
-              <ZoneChart zones={ride.zones_power_sec} totalSec={totalZoneSec} />
-            </div>
+        {/* Zone charts — side by side if both available */}
+        {(totalZonePowerSec > 0 || totalZoneHrSec > 0) && (
+          <div className={cn('grid gap-6', totalZonePowerSec > 0 && totalZoneHrSec > 0 ? 'lg:grid-cols-2' : 'grid-cols-1')}>
+            {totalZonePowerSec > 0 && ride.zones_power_sec && (
+              <div>
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Power Zone Distribution</h2>
+                <div className="rounded-2xl border p-5">
+                  <ZoneChart zones={ride.zones_power_sec} totalSec={totalZonePowerSec} />
+                </div>
+              </div>
+            )}
+            {totalZoneHrSec > 0 && ride.zones_hr_sec && (
+              <div>
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">HR Zone Distribution</h2>
+                <div className="rounded-2xl border p-5">
+                  <HrZoneChart zones={ride.zones_hr_sec} totalSec={totalZoneHrSec} />
+                </div>
+              </div>
+            )}
           </div>
         )}
 
