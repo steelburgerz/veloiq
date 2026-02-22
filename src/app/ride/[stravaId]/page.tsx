@@ -14,6 +14,7 @@ import {
   ArrowLeft, Bike, Zap, Heart, Timer, Mountain,
   Flame, TrendingUp, MonitorPlay, Wind, Utensils
 } from 'lucide-react'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -83,6 +84,7 @@ export default async function RidePage({ params }: PageProps) {
             <Bike className="h-5 w-5 text-indigo-500" />
             WheelMate
           </Link>
+          <ThemeToggle />
         </div>
       </nav>
 

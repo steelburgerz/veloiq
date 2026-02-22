@@ -15,6 +15,7 @@ import { EftpChart } from '@/components/EftpChart'
 import { AthleteStatBar } from '@/components/AthleteStatBar'
 import { Bike, Zap, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,6 +46,7 @@ export default async function DashboardPage() {
             <span className="font-medium text-foreground">Ralph</span>
             <span className="hidden sm:inline">·</span>
             <span className="hidden sm:inline text-indigo-500 font-semibold">{daysToTiti}d to TiTi</span>
+            <ThemeToggle />
           </div>
         </div>
       </nav>
