@@ -1,65 +1,111 @@
-import Image from "next/image";
+import { getTodayReadiness, getRecentRides, getPeakPower, getLoadChartData } from '@/lib/data'
+import { getTitiDaysRemaining } from '@/lib/titi'
+import { ReadinessCard } from '@/components/ReadinessCard'
+import { RideRow } from '@/components/RideRow'
+import { TitiCountdown } from '@/components/TitiCountdown'
+import { PeakPowerTable } from '@/components/PeakPowerTable'
+import { LoadChart } from '@/components/LoadChart'
+import { Bike, Zap } from 'lucide-react'
 
-export default function Home() {
+export const dynamic = 'force-dynamic'
+
+export default async function DashboardPage() {
+  const today = getTodayReadiness()
+  const rides = getRecentRides(15)
+  const peakPower = getPeakPower()
+  const chartData = getLoadChartData(60)
+  const daysToTiti = getTitiDaysRemaining()
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-background">
+      {/* Nav */}
+      <nav className="border-b sticky top-0 bg-background/90 backdrop-blur z-10">
+        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2 font-bold text-lg">
+            <Bike className="h-5 w-5 text-indigo-500" />
+            WheelMate
+          </div>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">Ralph</span>
+            <span className="hidden sm:inline">·</span>
+            <span className="hidden sm:inline text-indigo-500 font-semibold">{daysToTiti}d to TiTi</span>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </nav>
+
+      <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+
+        {/* Top row — Readiness + TiTi */}
+        <div className="grid lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Today's Readiness</h2>
+            {today ? (
+              <ReadinessCard entry={today} />
+            ) : (
+              <div className="rounded-2xl border p-8 text-center text-muted-foreground">
+                No readiness data yet. Run <code className="text-xs bg-muted px-1 py-0.5 rounded">scripts/readiness.py</code>
+              </div>
+            )}
+          </div>
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Race Countdown</h2>
+            <TitiCountdown />
+          </div>
         </div>
+
+        {/* Load chart */}
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Training Load — 60 days</h2>
+          <div className="rounded-2xl border p-5">
+            {chartData.length > 0 ? (
+              <LoadChart data={chartData} />
+            ) : (
+              <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">
+                No load data available
+              </div>
+            )}
+            <div className="flex gap-6 mt-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5"><span className="h-2 w-4 rounded-full bg-indigo-500 inline-block" />CTL (Fitness)</div>
+              <div className="flex items-center gap-1.5"><span className="h-2 w-4 rounded-full bg-amber-500 inline-block" />ATL (Fatigue)</div>
+              <div className="flex items-center gap-1.5"><span className="h-2 w-4 rounded-full bg-green-500 inline-block" />TSB (Form)</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent rides + Peak power */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Recent rides */}
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Recent Rides</h2>
+            <div className="rounded-2xl border px-4">
+              {rides.length > 0 ? (
+                rides.map((ride) => <RideRow key={`${ride.date}-${ride.strava_id}`} ride={ride} />)
+              ) : (
+                <div className="py-10 text-center text-muted-foreground text-sm">No rides logged yet</div>
+              )}
+            </div>
+          </div>
+
+          {/* Peak power */}
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3 flex items-center gap-2">
+              <Zap className="h-3.5 w-3.5 text-amber-500" />
+              Peak Power Records
+            </h2>
+            <div className="rounded-2xl border px-4 py-2">
+              {peakPower ? (
+                <>
+                  <PeakPowerTable data={peakPower} />
+                  <p className="text-xs text-muted-foreground mt-3 pb-2">Period: {peakPower.period}</p>
+                </>
+              ) : (
+                <div className="py-10 text-center text-muted-foreground text-sm">No peak power data yet</div>
+              )}
+            </div>
+          </div>
+        </div>
+
       </main>
     </div>
-  );
+  )
 }
