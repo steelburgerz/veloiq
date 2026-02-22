@@ -3,7 +3,7 @@ import { formatDuration } from '@/lib/format'
 import { TrainingEffectBadge } from '@/components/TrainingEffectBadge'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
-import { ChevronRight, Bike, MonitorPlay } from 'lucide-react'
+import { Bike, MonitorPlay } from 'lucide-react'
 
 const OUTDOOR_GEAR = 'b16927637'
 
@@ -18,36 +18,53 @@ const sessionColors: Record<SessionType, string> = {
   race:       'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300',
 }
 
+const sessionBarColor: Record<SessionType, string> = {
+  threshold:  'bg-red-500',
+  tempo:      'bg-orange-500',
+  vo2:        'bg-purple-500',
+  endurance:  'bg-blue-400',
+  long_ride:  'bg-sky-500',
+  mixed:      'bg-teal-500',
+  recovery:   'bg-gray-400',
+  race:       'bg-yellow-500',
+}
+
 interface RideRowProps {
   ride: Ride
 }
 
 export function RideRow({ ride }: RideRowProps) {
-  const dateStr = new Date(ride.date).toLocaleDateString('en-SG', {
-    weekday: 'short', day: 'numeric', month: 'short'
-  })
   const isOutdoor = ride.gear_id === OUTDOOR_GEAR
+  const dateStr = new Date(ride.date).toLocaleDateString('en-SG', {
+    weekday: 'short', day: 'numeric', month: 'short',
+  })
 
   return (
     <Link
       href={`/ride/${ride.strava_id}`}
-      className="flex items-center gap-3 py-3 border-b last:border-0 hover:bg-muted/40 -mx-4 px-4 transition-colors group"
+      className="flex items-start gap-3 rounded-xl px-3 py-3 hover:bg-muted/60 transition-colors group cursor-pointer"
     >
-      {/* Bike type icon */}
-      <div className="shrink-0 text-muted-foreground/60" title={isOutdoor ? 'Outdoor' : 'Zwift / Indoor'}>
-        {isOutdoor
-          ? <Bike className="h-3.5 w-3.5 text-sky-500" />
-          : <MonitorPlay className="h-3.5 w-3.5 text-indigo-400" />
-        }
-      </div>
+      {/* Left accent bar */}
+      <div className={cn('w-1 rounded-full shrink-0 mt-1', sessionBarColor[ride.session_type])} style={{ height: 36 }} />
 
-      {/* Date */}
-      <div className="w-20 shrink-0 text-xs text-muted-foreground">{dateStr}</div>
+      {/* Content */}
+      <div className="flex-1 min-w-0 space-y-1">
+        {/* Label */}
+        <p className="text-sm font-medium leading-tight truncate group-hover:text-primary transition-colors">
+          {ride.label}
+        </p>
 
-      {/* Label + badges */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">{ride.label}</p>
-        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+        {/* Date + bike type */}
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          {isOutdoor
+            ? <Bike className="h-3 w-3 text-sky-500 shrink-0" />
+            : <MonitorPlay className="h-3 w-3 text-indigo-400 shrink-0" />
+          }
+          <span>{dateStr}</span>
+        </div>
+
+        {/* Badges row */}
+        <div className="flex items-center gap-1.5 flex-wrap">
           <span className={cn('text-xs px-1.5 py-0.5 rounded-full font-medium', sessionColors[ride.session_type])}>
             {ride.session_type.replace('_', ' ')}
           </span>
@@ -55,49 +72,19 @@ export function RideRow({ ride }: RideRowProps) {
             <TrainingEffectBadge aerobic={ride.aerobic_te} anaerobic={ride.anaerobic_te ?? 0} size="sm" />
           )}
         </div>
-      </div>
 
-      {/* Stats */}
-      <div className="hidden sm:flex items-center gap-4 text-xs text-muted-foreground shrink-0">
-        {ride.np_w && (
-          <div className="text-right">
-            <p className="font-semibold text-foreground">{ride.np_w}W</p>
-            <p>NP</p>
-          </div>
-        )}
-        <div className="text-right">
-          <p className="font-semibold text-foreground">{ride.distance_km.toFixed(0)}km</p>
-          <p>{formatDuration(ride.duration_min)}</p>
+        {/* Stats row */}
+        <div className="flex items-center gap-3 text-xs text-muted-foreground pt-0.5">
+          <span className="font-semibold text-foreground">{ride.distance_km.toFixed(0)}km</span>
+          <span>{formatDuration(ride.duration_min)}</span>
+          {ride.np_w && (
+            <span className="font-semibold text-foreground">{ride.np_w}W</span>
+          )}
+          {ride.intervals_load && (
+            <span className="ml-auto font-medium">{ride.intervals_load} <span className="font-normal">load</span></span>
+          )}
         </div>
-        {ride.intervals_load && (
-          <div className="text-right">
-            <p className="font-semibold text-foreground">{ride.intervals_load}</p>
-            <p>Load</p>
-          </div>
-        )}
-        {ride.suffer_score !== null && ride.suffer_score !== undefined && (
-          <div className="text-right">
-            <p className={cn('font-semibold',
-              ride.suffer_score >= 200 ? 'text-red-500' :
-              ride.suffer_score >= 100 ? 'text-orange-500' :
-              'text-foreground'
-            )}>
-              {ride.suffer_score}
-            </p>
-            <p>Suffer</p>
-          </div>
-        )}
-        {ride.tsb !== null && ride.tsb !== undefined && (
-          <div className="text-right">
-            <p className={cn('font-semibold', (ride.tsb ?? 0) >= 0 ? 'text-green-600' : 'text-red-500')}>
-              {(ride.tsb ?? 0) > 0 ? '+' : ''}{(ride.tsb ?? 0).toFixed(1)}
-            </p>
-            <p>TSB</p>
-          </div>
-        )}
       </div>
-
-      <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0 group-hover:text-primary transition-colors" />
     </Link>
   )
 }
