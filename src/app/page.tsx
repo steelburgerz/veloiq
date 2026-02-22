@@ -1,4 +1,8 @@
-import { getTodayReadiness, getRecentRides, getPeakPower, getLoadChartData, getWeekSummaries, getWkgCheckpoints } from '@/lib/data'
+import {
+  getTodayReadiness, getRecentRides, getPeakPower,
+  getLoadChartData, getWeekSummaries, getWkgCheckpoints,
+  getEftpTrend, getAthleteStats
+} from '@/lib/data'
 import { getTitiDaysRemaining } from '@/lib/titi'
 import { ReadinessCard } from '@/components/ReadinessCard'
 import { RideRow } from '@/components/RideRow'
@@ -7,7 +11,10 @@ import { PeakPowerTable } from '@/components/PeakPowerTable'
 import { LoadChart } from '@/components/LoadChart'
 import { WeekSummaryStrip } from '@/components/WeekSummaryStrip'
 import { WkgChart } from '@/components/WkgChart'
-import { Bike, Zap } from 'lucide-react'
+import { EftpChart } from '@/components/EftpChart'
+import { AthleteStatBar } from '@/components/AthleteStatBar'
+import { Bike, Zap, AlertTriangle } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,13 +26,15 @@ export default async function DashboardPage() {
   const daysToTiti = getTitiDaysRemaining()
   const weeks = getWeekSummaries(6)
   const wkgCheckpoints = getWkgCheckpoints()
-
-  // Current week stats
+  const eftpTrend = getEftpTrend()
+  const stats = getAthleteStats()
   const thisWeek = weeks[0]
+
+  // Ramp rate alert
+  const rampAlert = stats.rampRate !== null && Math.abs(stats.rampRate) > 8
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Nav */}
       <nav className="border-b sticky top-0 bg-background/90 backdrop-blur z-10">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-lg">
@@ -42,6 +51,29 @@ export default async function DashboardPage() {
 
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
 
+        {/* Ramp rate alert banner */}
+        {rampAlert && (
+          <div className="flex items-start gap-3 rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/30 dark:border-red-800 px-4 py-3">
+            <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
+            <p className="text-sm text-red-700 dark:text-red-300">
+              <span className="font-semibold">Ramp rate alert:</span> CTL is changing at {stats.rampRate! > 0 ? '+' : ''}{stats.rampRate!.toFixed(1)}/day.
+              {stats.rampRate! < 0 ? ' Sharp fitness drop — consider easing up or reviewing recent load.' : ' Loading up fast — watch for overtraining signs.'}
+            </p>
+          </div>
+        )}
+
+        {/* Athlete stat bar */}
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Athlete Snapshot</h2>
+          <AthleteStatBar
+            vo2max={stats.vo2max}
+            eftp={stats.eftp}
+            wPrime={stats.wPrime}
+            weight={stats.weight}
+            rampRate={stats.rampRate}
+          />
+        </div>
+
         {/* Top row — Readiness + TiTi */}
         <div className="grid lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2">
@@ -50,7 +82,7 @@ export default async function DashboardPage() {
               <ReadinessCard entry={today} />
             ) : (
               <div className="rounded-2xl border p-8 text-center text-muted-foreground">
-                No readiness data yet. Run <code className="text-xs bg-muted px-1 py-0.5 rounded">scripts/readiness.py</code>
+                No readiness data. Run <code className="text-xs bg-muted px-1 py-0.5 rounded">scripts/readiness.py</code>
               </div>
             )}
           </div>
@@ -73,8 +105,28 @@ export default async function DashboardPage() {
           <WeekSummaryStrip weeks={weeks} />
         </div>
 
-        {/* Load chart + W/kg trend */}
+        {/* eFTP trend + Load chart */}
         <div className="grid lg:grid-cols-2 gap-6">
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+              eFTP Trend
+              {stats.eftp && <span className="ml-2 text-indigo-600 dark:text-indigo-400 font-bold normal-case text-sm">{stats.eftp}W</span>}
+            </h2>
+            <div className="rounded-2xl border p-5">
+              {eftpTrend.length > 0 ? (
+                <>
+                  <EftpChart data={eftpTrend} ftp={270} />
+                  <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5"><span className="h-2 w-4 rounded-full bg-indigo-500 inline-block" />eFTP</div>
+                    <div className="flex items-center gap-1.5"><span className="h-2 w-4 rounded-full bg-amber-400 opacity-60 inline-block" />Ramp rate</div>
+                  </div>
+                </>
+              ) : (
+                <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">No eFTP data</div>
+              )}
+            </div>
+          </div>
+
           <div>
             <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Training Load — 60 days</h2>
             <div className="rounded-2xl border p-5">
@@ -90,35 +142,35 @@ export default async function DashboardPage() {
               </div>
             </div>
           </div>
+        </div>
 
-          <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-              W/kg Progression
-              {wkgCheckpoints.length > 0 && (
-                <span className="ml-2 text-foreground font-bold normal-case text-sm">
-                  {wkgCheckpoints[wkgCheckpoints.length - 1].ftp_wkg.toFixed(2)} W/kg
-                </span>
-              )}
-            </h2>
-            <div className="rounded-2xl border p-5">
-              {wkgCheckpoints.length > 0 ? (
-                <>
-                  <WkgChart checkpoints={wkgCheckpoints} targetWkg={3.86} />
-                  <p className="text-xs text-muted-foreground mt-3">
-                    Current FTP: <span className="font-semibold text-foreground">{wkgCheckpoints[wkgCheckpoints.length - 1].ftp_w}W</span>
-                    {' · '}Target: <span className="font-semibold text-green-600">3.86+ W/kg for TiTi</span>
-                  </p>
-                </>
-              ) : (
-                <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">No W/kg data yet</div>
-              )}
-            </div>
+        {/* W/kg progression */}
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+            W/kg Progression
+            {wkgCheckpoints.length > 0 && (
+              <span className="ml-2 text-foreground font-bold normal-case text-sm">
+                {wkgCheckpoints[wkgCheckpoints.length - 1].ftp_wkg.toFixed(2)} W/kg
+              </span>
+            )}
+          </h2>
+          <div className="rounded-2xl border p-5">
+            {wkgCheckpoints.length > 0 ? (
+              <>
+                <WkgChart checkpoints={wkgCheckpoints} targetWkg={3.86} />
+                <p className="text-xs text-muted-foreground mt-3">
+                  Current FTP: <span className="font-semibold text-foreground">{wkgCheckpoints[wkgCheckpoints.length - 1].ftp_w}W</span>
+                  {' · '}Target: <span className="font-semibold text-green-600">3.86+ W/kg for TiTi</span>
+                </p>
+              </>
+            ) : (
+              <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">No W/kg data yet</div>
+            )}
           </div>
         </div>
 
         {/* Recent rides + Peak power */}
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Recent rides */}
           <div>
             <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Recent Rides</h2>
             <div className="rounded-2xl border px-4">
@@ -130,7 +182,6 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          {/* Peak power */}
           <div>
             <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3 flex items-center gap-2">
               <Zap className="h-3.5 w-3.5 text-amber-500" />

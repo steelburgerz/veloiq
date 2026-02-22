@@ -1,15 +1,22 @@
 import { getRideById } from '@/lib/data'
-import { formatDuration } from '@/lib/format'
+import { formatDuration, formatSleep } from '@/lib/format'
 import { ZoneChart } from '@/components/ZoneChart'
 import { HrZoneChart } from '@/components/HrZoneChart'
 import { KeyBlocksTable } from '@/components/KeyBlocksTable'
 import { RideAnalysis } from '@/components/RideAnalysis'
 import { RideMetrics } from '@/components/RideMetrics'
+import { TrainingEffectBadge } from '@/components/TrainingEffectBadge'
+import { DayContext } from '@/components/DayContext'
 import { SessionType } from '@/types'
-import { ArrowLeft, Bike, Zap, Heart, Timer, Mountain, Flame, TrendingUp } from 'lucide-react'
+import {
+  ArrowLeft, Bike, Zap, Heart, Timer, Mountain,
+  Flame, TrendingUp, MonitorPlay, Wind, Utensils
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+
+const OUTDOOR_GEAR = 'b16927637'
 
 const sessionColors: Record<SessionType, string> = {
   threshold:  'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
@@ -34,33 +41,38 @@ export default async function RidePage({ params }: PageProps) {
   const dateStr = new Date(ride.date).toLocaleDateString('en-SG', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   })
+  const isOutdoor = ride.gear_id === OUTDOOR_GEAR
+  const movingMin = ride.elapsed_time_sec ? ride.elapsed_time_sec / 60 : null
+  const stopTime = movingMin ? Math.max(0, movingMin - ride.duration_min) : null
 
   const totalZonePowerSec = ride.zones_power_sec
-    ? Object.values(ride.zones_power_sec).reduce((s, v) => s + (v ?? 0), 0)
-    : 0
-
+    ? Object.values(ride.zones_power_sec).reduce((s, v) => s + (v ?? 0), 0) : 0
   const totalZoneHrSec = ride.zones_hr_sec
-    ? Object.values(ride.zones_hr_sec).reduce((s, v) => s + (v ?? 0), 0)
-    : 0
+    ? Object.values(ride.zones_hr_sec).reduce((s, v) => s + (v ?? 0), 0) : 0
 
   const statCards = [
-    { icon: Timer,      label: 'Duration',  value: formatDuration(ride.duration_min) },
-    { icon: Bike,       label: 'Distance',  value: `${ride.distance_km.toFixed(1)}km` },
-    { icon: Mountain,   label: 'Elevation', value: `${ride.elev_m}m` },
-    { icon: Zap,        label: 'NP',        value: ride.np_w ? `${ride.np_w}W` : '—' },
-    { icon: Zap,        label: 'Avg Power', value: ride.avg_power_w ? `${ride.avg_power_w}W` : '—' },
-    { icon: Zap,        label: 'Max Power', value: ride.max_power_w ? `${ride.max_power_w}W` : '—' },
-    { icon: Heart,      label: 'Avg HR',    value: ride.avg_hr_bpm ? `${ride.avg_hr_bpm}bpm` : '—' },
-    { icon: Heart,      label: 'Max HR',    value: ride.max_hr_bpm ? `${ride.max_hr_bpm}bpm` : '—' },
-    { icon: Flame,      label: 'Work',      value: `${ride.work_kj}kJ` },
-    { icon: TrendingUp, label: 'Load',      value: ride.intervals_load ? `${ride.intervals_load}` : '—' },
-    { icon: TrendingUp, label: 'IF',        value: ride.if ? ride.if.toFixed(2) : '—' },
-    { icon: TrendingUp, label: 'TSB',       value: ride.tsb != null ? `${ride.tsb > 0 ? '+' : ''}${ride.tsb.toFixed(1)}` : '—' },
+    { icon: Timer,      label: 'Moving',      value: formatDuration(ride.duration_min) },
+    ...(stopTime && stopTime > 2 ? [{ icon: Timer, label: 'Elapsed', value: formatDuration(movingMin!) }] : []),
+    { icon: Bike,       label: 'Distance',    value: `${ride.distance_km.toFixed(1)}km` },
+    { icon: Mountain,   label: 'Elevation',   value: `${ride.elev_m}m` },
+    ...(ride.elev_high_m ? [{ icon: Mountain, label: 'Peak Alt', value: `${ride.elev_high_m.toFixed(0)}m` }] : []),
+    { icon: Zap,        label: 'NP',          value: ride.np_w ? `${ride.np_w}W` : '—' },
+    { icon: Zap,        label: 'Avg Power',   value: ride.avg_power_w ? `${ride.avg_power_w}W` : '—' },
+    { icon: Zap,        label: 'Max Power',   value: ride.max_power_w ? `${ride.max_power_w}W` : '—' },
+    { icon: Heart,      label: 'Avg HR',      value: ride.avg_hr_bpm ? `${ride.avg_hr_bpm}bpm` : '—' },
+    { icon: Heart,      label: 'Max HR',      value: ride.max_hr_bpm ? `${ride.max_hr_bpm}bpm` : '—' },
+    { icon: Flame,      label: 'Calories',    value: ride.calories ? `${ride.calories.toLocaleString()}` : '—' },
+    { icon: Flame,      label: 'Work',        value: `${ride.work_kj}kJ` },
+    { icon: TrendingUp, label: 'Load',        value: ride.intervals_load ? `${ride.intervals_load}` : '—' },
+    { icon: TrendingUp, label: 'IF',          value: ride.if ? ride.if.toFixed(2) : '—' },
+    { icon: TrendingUp, label: 'TSB',         value: ride.tsb != null ? `${ride.tsb > 0 ? '+' : ''}${ride.tsb.toFixed(1)}` : '—' },
+    ...(ride.suffer_score ? [{ icon: Flame, label: 'Suffer', value: `${ride.suffer_score}` }] : []),
+    ...(ride.avg_respiration_rpm ? [{ icon: Wind, label: 'Breathing', value: `${ride.avg_respiration_rpm.toFixed(1)} rpm` }] : []),
+    ...(ride.carbs_used_g ? [{ icon: Utensils, label: 'Carbs', value: `${ride.carbs_used_g}g`, }] : []),
   ]
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Nav */}
       <nav className="border-b sticky top-0 bg-background/90 backdrop-blur z-10">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg">
@@ -72,7 +84,6 @@ export default async function RidePage({ params }: PageProps) {
 
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
 
-        {/* Back */}
         <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to dashboard
@@ -80,7 +91,13 @@ export default async function RidePage({ params }: PageProps) {
 
         {/* Header */}
         <div>
-          <div className="flex items-center gap-2 flex-wrap mb-1">
+          <div className="flex items-center gap-2 flex-wrap mb-2">
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              {isOutdoor
+                ? <><Bike className="h-4 w-4 text-sky-500" /><span className="text-xs">Outdoor</span></>
+                : <><MonitorPlay className="h-4 w-4 text-indigo-400" /><span className="text-xs">Zwift</span></>
+              }
+            </div>
             <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', sessionColors[ride.session_type])}>
               {ride.session_type.replace('_', ' ')}
             </span>
@@ -90,8 +107,7 @@ export default async function RidePage({ params }: PageProps) {
               </span>
             )}
             {ride.avg_temp_c && (
-              <span className={cn(
-                'text-xs px-2 py-0.5 rounded-full font-medium',
+              <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium',
                 ride.avg_temp_c > 30 ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
               )}>
                 🌡️ {ride.avg_temp_c.toFixed(0)}°C
@@ -99,16 +115,28 @@ export default async function RidePage({ params }: PageProps) {
             )}
             <a
               href={`https://www.strava.com/activities/${ride.strava_id}`}
-              target="_blank"
-              rel="noopener noreferrer"
+              target="_blank" rel="noopener noreferrer"
               className="text-xs text-orange-500 hover:underline ml-auto"
             >
               View on Strava ↗
             </a>
           </div>
-          <h1 className="text-2xl font-bold mt-2">{ride.label}</h1>
+          <h1 className="text-2xl font-bold">{ride.label}</h1>
           <p className="text-sm text-muted-foreground mt-1">{dateStr}</p>
         </div>
+
+        {/* Training Effect — prominent at top */}
+        {ride.aerobic_te !== null && (
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Training Effect</h2>
+            <div className="rounded-2xl border p-5">
+              <TrainingEffectBadge aerobic={ride.aerobic_te} anaerobic={ride.anaerobic_te ?? 0} size="md" />
+              <p className="text-xs text-muted-foreground mt-3">
+                Training effect shows whether this session was primarily aerobic or anaerobic stimulus, and how hard it pushed adaptation.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Stats grid */}
         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -119,6 +147,12 @@ export default async function RidePage({ params }: PageProps) {
               <p className="text-xs text-muted-foreground">{label}</p>
             </div>
           ))}
+        </div>
+
+        {/* How you felt that day */}
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">How You Felt That Day</h2>
+          <DayContext ride={ride} />
         </div>
 
         {/* Coach analysis */}
@@ -140,12 +174,12 @@ export default async function RidePage({ params }: PageProps) {
           </div>
         )}
 
-        {/* Zone charts — side by side if both available */}
+        {/* Zone charts */}
         {(totalZonePowerSec > 0 || totalZoneHrSec > 0) && (
           <div className={cn('grid gap-6', totalZonePowerSec > 0 && totalZoneHrSec > 0 ? 'lg:grid-cols-2' : 'grid-cols-1')}>
             {totalZonePowerSec > 0 && ride.zones_power_sec && (
               <div>
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Power Zone Distribution</h2>
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Power Zones</h2>
                 <div className="rounded-2xl border p-5">
                   <ZoneChart zones={ride.zones_power_sec} totalSec={totalZonePowerSec} />
                 </div>
@@ -153,7 +187,7 @@ export default async function RidePage({ params }: PageProps) {
             )}
             {totalZoneHrSec > 0 && ride.zones_hr_sec && (
               <div>
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">HR Zone Distribution</h2>
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">HR Zones</h2>
                 <div className="rounded-2xl border p-5">
                   <HrZoneChart zones={ride.zones_hr_sec} totalSec={totalZoneHrSec} />
                 </div>

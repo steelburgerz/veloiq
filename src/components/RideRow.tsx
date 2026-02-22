@@ -1,8 +1,11 @@
 import { Ride, SessionType } from '@/types'
 import { formatDuration } from '@/lib/format'
+import { TrainingEffectBadge } from '@/components/TrainingEffectBadge'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Bike, MonitorPlay } from 'lucide-react'
+
+const OUTDOOR_GEAR = 'b16927637'
 
 const sessionColors: Record<SessionType, string> = {
   threshold:  'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
@@ -23,21 +26,35 @@ export function RideRow({ ride }: RideRowProps) {
   const dateStr = new Date(ride.date).toLocaleDateString('en-SG', {
     weekday: 'short', day: 'numeric', month: 'short'
   })
+  const isOutdoor = ride.gear_id === OUTDOOR_GEAR
 
   return (
     <Link
       href={`/ride/${ride.strava_id}`}
       className="flex items-center gap-3 py-3 border-b last:border-0 hover:bg-muted/40 -mx-4 px-4 transition-colors group"
     >
-      {/* Date */}
-      <div className="w-24 shrink-0 text-xs text-muted-foreground">{dateStr}</div>
+      {/* Bike type icon */}
+      <div className="shrink-0 text-muted-foreground/60" title={isOutdoor ? 'Outdoor' : 'Zwift / Indoor'}>
+        {isOutdoor
+          ? <Bike className="h-3.5 w-3.5 text-sky-500" />
+          : <MonitorPlay className="h-3.5 w-3.5 text-indigo-400" />
+        }
+      </div>
 
-      {/* Label + type */}
+      {/* Date */}
+      <div className="w-20 shrink-0 text-xs text-muted-foreground">{dateStr}</div>
+
+      {/* Label + badges */}
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">{ride.label}</p>
-        <span className={cn('inline-block mt-0.5 text-xs px-1.5 py-0.5 rounded-full font-medium', sessionColors[ride.session_type])}>
-          {ride.session_type.replace('_', ' ')}
-        </span>
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+          <span className={cn('text-xs px-1.5 py-0.5 rounded-full font-medium', sessionColors[ride.session_type])}>
+            {ride.session_type.replace('_', ' ')}
+          </span>
+          {ride.aerobic_te !== null && (
+            <TrainingEffectBadge aerobic={ride.aerobic_te} anaerobic={ride.anaerobic_te ?? 0} size="sm" />
+          )}
+        </div>
       </div>
 
       {/* Stats */}
@@ -56,6 +73,18 @@ export function RideRow({ ride }: RideRowProps) {
           <div className="text-right">
             <p className="font-semibold text-foreground">{ride.intervals_load}</p>
             <p>Load</p>
+          </div>
+        )}
+        {ride.suffer_score !== null && ride.suffer_score !== undefined && (
+          <div className="text-right">
+            <p className={cn('font-semibold',
+              ride.suffer_score >= 200 ? 'text-red-500' :
+              ride.suffer_score >= 100 ? 'text-orange-500' :
+              'text-foreground'
+            )}>
+              {ride.suffer_score}
+            </p>
+            <p>Suffer</p>
           </div>
         )}
         {ride.tsb !== null && ride.tsb !== undefined && (

@@ -66,6 +66,8 @@ export interface Ride {
   duration_min: number
   distance_km: number
   elev_m: number
+  elev_high_m: number | null
+  elev_low_m: number | null
   work_kj: number
   avg_power_w: number | null
   np_w: number | null
@@ -73,15 +75,23 @@ export interface Ride {
   avg_hr_bpm: number | null
   max_hr_bpm: number | null
   avg_cadence_rpm: number | null
+  avg_respiration_rpm: number | null
   intervals_load: number | null
+  garmin_training_load: number | null
   ctl: number | null
   atl: number | null
   tsb: number | null
   if: number | null
   tss: number | null
-  zones_power_sec: ZonesSec | null
-  zones_hr_sec: ZonesSec | null
-  key_blocks: KeyBlock[] | null
+  calories: number | null
+  suffer_score: number | null
+  elapsed_time_sec: number | null
+  gear_id: string | null
+  training_load_pct: number | null
+  power_hr_ratio: number | null
+  // Training effect
+  aerobic_te: number | null
+  anaerobic_te: number | null
   // Performance metrics
   decoupling_pct: number | null
   efficiency_factor: number | null
@@ -93,6 +103,20 @@ export interface Ride {
   max_temp_c: number | null
   // Nutrition
   carbs_used_g: number | null
+  // Zone distributions
+  zones_power_sec: ZonesSec | null
+  zones_hr_sec: ZonesSec | null
+  key_blocks: KeyBlock[] | null
+  // Day-of context (readiness at time of ride)
+  day_weight_kg: number | null
+  day_rhr_bpm: number | null
+  day_hrv_ms: number | null
+  day_sleep_secs: number | null
+  day_sleep_score: number | null
+  day_vo2max: number | null
+  day_eftp_w: number | null
+  day_w_prime_j: number | null
+  day_ramp_rate: number | null
 }
 
 export interface PeakPowerRecord {
@@ -130,4 +154,11 @@ export interface WeekSummary {
   totalLoad: number
   totalElev: number
   avgTSB: number | null
+}
+
+export interface EftpPoint {
+  date: string
+  eftp: number
+  wPrime: number
+  rampRate: number | null
 }

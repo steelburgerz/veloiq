@@ -109,5 +109,37 @@ export function getWeekSummaries(weeksBack = 6): WeekSummary[] {
   return summaries
 }
 
+export function getEftpTrend(): import('@/types').EftpPoint[] {
+  const rides = readNdjson<import('@/types').Ride>(path.join(MEMORY, 'rides.ndjson'))
+  // One point per date — take max eftp if multiple rides same day
+  const byDate: Record<string, import('@/types').EftpPoint> = {}
+  for (const r of rides) {
+    if (!r.day_eftp_w) continue
+    if (!byDate[r.date] || r.day_eftp_w > byDate[r.date].eftp) {
+      byDate[r.date] = {
+        date: r.date,
+        eftp: r.day_eftp_w,
+        wPrime: r.day_w_prime_j ?? 0,
+        rampRate: r.day_ramp_rate ?? null,
+      }
+    }
+  }
+  return Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date))
+}
+
+export function getAthleteStats() {
+  const rides = readNdjson<import('@/types').Ride>(path.join(MEMORY, 'rides.ndjson'))
+  const sorted = rides.sort((a, b) => b.date.localeCompare(a.date))
+  const latest = sorted[0]
+  const vo2maxRides = sorted.filter(r => r.day_vo2max !== null)
+  return {
+    vo2max: vo2maxRides.length ? vo2maxRides[0].day_vo2max : null,
+    eftp: latest?.day_eftp_w ?? null,
+    wPrime: latest?.day_w_prime_j ?? null,
+    weight: latest?.day_weight_kg ?? null,
+    rampRate: latest?.day_ramp_rate ?? null,
+  }
+}
+
 export { formatDuration, formatSleep } from './format'
 export { getTitiDaysRemaining } from './titi'
