@@ -13,8 +13,7 @@ import { WeekSummaryStrip } from '@/components/WeekSummaryStrip'
 import { WkgChart } from '@/components/WkgChart'
 import { EftpChart } from '@/components/EftpChart'
 import { AthleteStatBar } from '@/components/AthleteStatBar'
-import { ThemeToggle } from '@/components/ThemeToggle'
-import { Bike, Zap, AlertTriangle } from 'lucide-react'
+import { Zap, AlertTriangle } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,50 +31,7 @@ export default async function DashboardPage() {
   const rampAlert = stats.rampRate !== null && Math.abs(stats.rampRate) > 8
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-
-      {/* ── Top nav ─────────────────────────────────────────────── */}
-      <nav className="border-b sticky top-0 bg-background/90 backdrop-blur z-20 shrink-0">
-        <div className="h-14 px-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-bold text-lg">
-            <Bike className="h-5 w-5 text-indigo-500" />
-            WheelMate
-          </div>
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">Ralph</span>
-            <span className="hidden sm:inline">·</span>
-            <span className="hidden sm:inline text-indigo-500 font-semibold">{daysToTiti}d to TiTi</span>
-            <ThemeToggle />
-          </div>
-        </div>
-      </nav>
-
-      {/* ── Two-panel body ──────────────────────────────────────── */}
-      <div className="flex flex-1 overflow-hidden">
-
-        {/* ── LEFT PANEL — Recent Rides ───────────────────────── */}
-        <aside className="hidden lg:flex flex-col w-72 xl:w-80 shrink-0 border-r bg-muted/20 overflow-y-auto">
-          <div className="sticky top-0 bg-muted/20 backdrop-blur border-b px-4 py-3 z-10">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Recent Rides</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">{rides.length} activities</p>
-          </div>
-          <div className="flex-1 px-2 py-2">
-            {rides.length > 0 ? (
-              rides.map((ride) => (
-                <RideRow key={`${ride.date}-${ride.strava_id}`} ride={ride} />
-              ))
-            ) : (
-              <div className="py-12 text-center text-muted-foreground text-sm px-4">
-                No rides logged yet
-              </div>
-            )}
-          </div>
-        </aside>
-
-        {/* ── RIGHT PANEL — Main content ──────────────────────── */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto px-6 py-8 space-y-8">
-
+    <div className="space-y-8">
             {/* Ramp rate alert */}
             {rampAlert && (
               <div className="flex items-start gap-3 rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/30 dark:border-red-800 px-4 py-3">
@@ -226,10 +182,6 @@ export default async function DashboardPage() {
               </div>
             </div>
 
-          </div>
-        </main>
-
-      </div>
     </div>
   )
 }
