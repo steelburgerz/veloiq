@@ -1,4 +1,5 @@
 import { getRideById } from '@/lib/data'
+import { getActivityMap } from '@/lib/strava'
 import { formatDuration, formatSleep } from '@/lib/format'
 import { ZoneChart } from '@/components/ZoneChart'
 import { HrZoneChart } from '@/components/HrZoneChart'
@@ -7,6 +8,7 @@ import { RideAnalysis } from '@/components/RideAnalysis'
 import { RideMetrics } from '@/components/RideMetrics'
 import { TrainingEffectBadge } from '@/components/TrainingEffectBadge'
 import { DayContext } from '@/components/DayContext'
+import { RideMap } from '@/components/RideMap'
 import { SessionType } from '@/types'
 import {
   ArrowLeft, Bike, Zap, Heart, Timer, Mountain,
@@ -37,6 +39,8 @@ export default async function RidePage({ params }: PageProps) {
   const { stravaId } = await params
   const ride = getRideById(stravaId)
   if (!ride) notFound()
+
+  const activityMap = await getActivityMap(stravaId)
 
   const dateStr = new Date(ride.date).toLocaleDateString('en-SG', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
@@ -124,6 +128,23 @@ export default async function RidePage({ params }: PageProps) {
           <h1 className="text-2xl font-bold">{ride.label}</h1>
           <p className="text-sm text-muted-foreground mt-1">{dateStr}</p>
         </div>
+
+        {/* Route map */}
+        {activityMap?.summaryPolyline && !activityMap.isVirtual && (
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Route</h2>
+            <RideMap
+              polyline={activityMap.summaryPolyline}
+              startLatlng={activityMap.startLatlng}
+            />
+          </div>
+        )}
+        {activityMap?.isVirtual && (
+          <div className="rounded-2xl border bg-muted/20 px-4 py-3 text-sm text-muted-foreground flex items-center gap-2">
+            <span>🖥️</span>
+            <span>Virtual ride — no real-world map available.</span>
+          </div>
+        )}
 
         {/* Training Effect — prominent at top */}
         {ride.aerobic_te !== null && (
