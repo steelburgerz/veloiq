@@ -54,9 +54,9 @@ interface RideMetricsProps {
 }
 
 export function RideMetrics({ ride }: RideMetricsProps) {
-  const hasPerf = ride.decoupling_pct !== null || ride.efficiency_factor !== null ||
-    ride.variability_index !== null || ride.polarization_index !== null || ride.lr_balance !== null
-  const hasEnv = ride.avg_temp_c !== null || ride.carbs_used_g !== null
+  const hasPerf = ride.decoupling_pct != null || ride.efficiency_factor != null ||
+    ride.variability_index != null || ride.polarization_index != null || ride.lr_balance != null
+  const hasEnv = ride.avg_temp_c != null || ride.carbs_used_g != null
 
   if (!hasPerf && !hasEnv) return null
 
@@ -70,7 +70,7 @@ export function RideMetrics({ ride }: RideMetricsProps) {
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Performance Metrics</h3>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {ride.decoupling_pct !== null && (
+            {ride.decoupling_pct != null && (
               <Metric
                 label="Aerobic Decoupling"
                 value={`${ride.decoupling_pct.toFixed(1)}%`}
@@ -78,7 +78,7 @@ export function RideMetrics({ ride }: RideMetricsProps) {
                 highlight={decouplingHighlight(ride.decoupling_pct)}
               />
             )}
-            {ride.efficiency_factor !== null && (
+            {ride.efficiency_factor != null && (
               <Metric
                 label="Efficiency Factor"
                 value={ride.efficiency_factor.toFixed(2)}
@@ -86,7 +86,7 @@ export function RideMetrics({ ride }: RideMetricsProps) {
                 highlight={efHighlight(ride.efficiency_factor)}
               />
             )}
-            {ride.variability_index !== null && (
+            {ride.variability_index != null && (
               <Metric
                 label="Variability Index"
                 value={ride.variability_index.toFixed(2)}
@@ -94,14 +94,14 @@ export function RideMetrics({ ride }: RideMetricsProps) {
                 highlight={viHighlight(ride.variability_index)}
               />
             )}
-            {ride.polarization_index !== null && (
+            {ride.polarization_index != null && (
               <Metric
                 label="Polarization"
                 value={ride.polarization_index.toFixed(2)}
                 sub=">1 = polarized"
               />
             )}
-            {ride.lr_balance && (
+            {ride.lr_balance != null && (
               <Metric
                 label="L/R Balance"
                 value={ride.lr_balance}
@@ -111,43 +111,45 @@ export function RideMetrics({ ride }: RideMetricsProps) {
             )}
           </div>
 
-          {/* Inline explanations for key metrics */}
-          <div className="mt-3 grid sm:grid-cols-2 gap-2">
-            {ride.decoupling_pct !== null && (
-              <div className={cn(
-                'rounded-lg border p-3 text-xs',
-                ride.decoupling_pct <= 5
-                  ? 'bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-800'
-                  : ride.decoupling_pct <= 8
-                  ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800'
-                  : 'bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
-              )}>
-                <p className="font-semibold mb-0.5">Aerobic Decoupling: {ride.decoupling_pct.toFixed(1)}%</p>
-                <p className="text-muted-foreground">
-                  {ride.decoupling_pct <= 5
-                    ? 'HR stayed proportional to power through the ride. Strong aerobic base holding up.'
+          {/* Inline explanations — only render when values are non-null */}
+          {(ride.decoupling_pct !== null || ride.efficiency_factor !== null) && (
+            <div className="mt-3 grid sm:grid-cols-2 gap-2">
+              {ride.decoupling_pct !== null && ride.decoupling_pct !== undefined && (
+                <div className={cn(
+                  'rounded-lg border p-3 text-xs',
+                  ride.decoupling_pct <= 5
+                    ? 'bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-800'
                     : ride.decoupling_pct <= 8
-                    ? 'Slight HR drift in second half. Acceptable for long rides in heat — watch fuelling and hydration.'
-                    : 'Significant HR drift vs power. Could indicate fatigue, heat stress, or dehydration. Prioritise recovery.'}
-                </p>
-              </div>
-            )}
-            {ride.efficiency_factor !== null && (
-              <div className={cn(
-                'rounded-lg border p-3 text-xs',
-                ride.efficiency_factor >= 1.35
-                  ? 'bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-800'
-                  : 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800'
-              )}>
-                <p className="font-semibold mb-0.5">Efficiency Factor: {ride.efficiency_factor.toFixed(2)}</p>
-                <p className="text-muted-foreground">
-                  {ride.efficiency_factor >= 1.35
-                    ? 'Good aerobic efficiency — producing solid power per heartbeat.'
-                    : 'Room to grow. Track this over weeks: a rising EF means your aerobic system is adapting.'}
-                </p>
-              </div>
-            )}
-          </div>
+                    ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800'
+                    : 'bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
+                )}>
+                  <p className="font-semibold mb-0.5">Aerobic Decoupling: {ride.decoupling_pct.toFixed(1)}%</p>
+                  <p className="text-muted-foreground">
+                    {ride.decoupling_pct <= 5
+                      ? 'HR stayed proportional to power through the ride. Strong aerobic base holding up.'
+                      : ride.decoupling_pct <= 8
+                      ? 'Slight HR drift in second half. Acceptable for long rides in heat — watch fuelling and hydration.'
+                      : 'Significant HR drift vs power. Could indicate fatigue, heat stress, or dehydration. Prioritise recovery.'}
+                  </p>
+                </div>
+              )}
+              {ride.efficiency_factor !== null && ride.efficiency_factor !== undefined && (
+                <div className={cn(
+                  'rounded-lg border p-3 text-xs',
+                  ride.efficiency_factor >= 1.35
+                    ? 'bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-800'
+                    : 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800'
+                )}>
+                  <p className="font-semibold mb-0.5">Efficiency Factor: {ride.efficiency_factor.toFixed(2)}</p>
+                  <p className="text-muted-foreground">
+                    {ride.efficiency_factor >= 1.35
+                      ? 'Good aerobic efficiency — producing solid power per heartbeat.'
+                      : 'Room to grow. Track this over weeks: a rising EF means your aerobic system is adapting.'}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -159,7 +161,7 @@ export function RideMetrics({ ride }: RideMetricsProps) {
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Environment & Nutrition</h3>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {ride.avg_temp_c !== null && (
+            {ride.avg_temp_c != null && (
               <Metric
                 label="Avg Temp"
                 value={`${ride.avg_temp_c.toFixed(1)}°C`}
@@ -167,14 +169,14 @@ export function RideMetrics({ ride }: RideMetricsProps) {
                 sub={ride.avg_temp_c > 30 ? 'High heat' : ride.avg_temp_c > 27 ? 'Warm' : 'Manageable'}
               />
             )}
-            {ride.max_temp_c !== null && (
+            {ride.max_temp_c != null && (
               <Metric
                 label="Max Temp"
                 value={`${ride.max_temp_c}°C`}
                 highlight={ride.max_temp_c > 33 ? 'bad' : 'warn'}
               />
             )}
-            {ride.carbs_used_g !== null && (
+            {ride.carbs_used_g != null && (
               <>
                 <Metric
                   label="Carbs Used"
