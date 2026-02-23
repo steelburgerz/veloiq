@@ -12,12 +12,32 @@ const ZONE_LABELS: Record<string, string> = {
   Z4: 'Z4 Threshold', Z5: 'Z5 VO2', Z6: 'Z6 Anaerobic', Z7: 'Z7 Max',
 }
 
+// Boundaries as % of max HR
+const HR_ZONE_PCT: Record<string, [number, number]> = {
+  Z1: [50,  60],
+  Z2: [60,  70],
+  Z3: [70,  80],
+  Z4: [80,  90],
+  Z5: [90, 100],
+  Z6: [100,110],
+  Z7: [110, 999],
+}
+
+function hrRange(zone: string, maxHr: number): string {
+  const pct = HR_ZONE_PCT[zone]
+  if (!pct) return ''
+  const lo = Math.round(maxHr * pct[0] / 100)
+  const hi = pct[1] >= 999 ? null : Math.round(maxHr * pct[1] / 100)
+  return hi ? `${lo}–${hi}` : `>${lo}`
+}
+
 interface HrZoneChartProps {
   zones: ZonesSec
   totalSec: number
+  maxHr?: number
 }
 
-export function HrZoneChart({ zones, totalSec }: HrZoneChartProps) {
+export function HrZoneChart({ zones, totalSec, maxHr = 177 }: HrZoneChartProps) {
   const data = Object.entries(zones)
     .filter(([k, sec]) => k !== 'SS' && sec && sec > 0)
     .map(([zone, sec]) => ({
@@ -48,12 +68,13 @@ export function HrZoneChart({ zones, totalSec }: HrZoneChartProps) {
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5 mt-1">
         {data.map((d) => (
-          <div key={d.zone} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="h-2 w-2 rounded-full" style={{ background: ZONE_COLORS[d.zone] ?? '#94a3b8' }} />
-            <span>{d.zone}</span>
-            <span className="font-medium text-foreground">{d.pct}%</span>
+          <div key={d.zone} className="flex items-center gap-1.5 text-xs">
+            <span className="h-2 w-2 rounded-full shrink-0" style={{ background: ZONE_COLORS[d.zone] ?? '#94a3b8' }} />
+            <span className="text-muted-foreground">{d.zone}</span>
+            <span className="text-muted-foreground/60">{hrRange(d.zone, maxHr)} bpm</span>
+            <span className="font-medium text-foreground ml-auto">{d.pct}%</span>
           </div>
         ))}
       </div>

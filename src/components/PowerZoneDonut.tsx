@@ -36,12 +36,33 @@ function fmtTime(sec: number) {
   return `${s}s`
 }
 
+// Boundaries as % of FTP (upper bound, inclusive)
+const ZONE_PCT: Record<string, [number, number]> = {
+  Z1: [0,   55],
+  Z2: [56,  75],
+  Z3: [76,  90],
+  SS: [88,  95],
+  Z4: [91, 105],
+  Z5: [106,120],
+  Z6: [121,150],
+  Z7: [151, 999],
+}
+
+function zoneRange(zone: string, ftp: number): string {
+  const pct = ZONE_PCT[zone]
+  if (!pct) return ''
+  const lo = Math.round(ftp * pct[0] / 100)
+  const hi = pct[1] >= 999 ? null : Math.round(ftp * pct[1] / 100)
+  return hi ? `${lo}–${hi}W` : `>${lo}W`
+}
+
 interface Props {
   zones: ZonesSec
   totalSec: number
+  ftp?: number
 }
 
-export function PowerZoneDonut({ zones, totalSec }: Props) {
+export function PowerZoneDonut({ zones, totalSec, ftp = 270 }: Props) {
   const data = ZONE_ORDER
     .filter((z) => {
       const k = z as keyof ZonesSec
@@ -97,6 +118,7 @@ export function PowerZoneDonut({ zones, totalSec }: Props) {
                 style={{ background: ZONE_COLORS[d.zone] ?? '#94a3b8' }}
               />
               <span className="text-xs text-muted-foreground flex-1">{d.zone} {d.label}</span>
+              <span className="text-xs text-muted-foreground/60 tabular-nums w-20">{zoneRange(d.zone, ftp)}</span>
               <span className="text-xs font-semibold tabular-nums">{d.pct}%</span>
               <span className="text-xs text-muted-foreground tabular-nums w-14 text-right">{fmtTime(d.sec)}</span>
             </div>
