@@ -31,9 +31,10 @@ const sessionBarColor: Record<SessionType, string> = {
 
 interface RideRowProps {
   ride: Ride
+  isActive?: boolean
 }
 
-export function RideRow({ ride }: RideRowProps) {
+export function RideRow({ ride, isActive = false }: RideRowProps) {
   const isOutdoor = ride.gear_id === OUTDOOR_GEAR
   const dateStr = new Date(ride.date).toLocaleDateString('en-SG', {
     weekday: 'short', day: 'numeric', month: 'short',
@@ -42,7 +43,12 @@ export function RideRow({ ride }: RideRowProps) {
   return (
     <Link
       href={`/ride/${ride.strava_id}`}
-      className="flex items-start gap-3 rounded-xl px-3 py-3 hover:bg-muted/60 transition-colors group cursor-pointer"
+      className={cn(
+        'flex items-start gap-3 rounded-xl px-3 py-3 transition-colors group cursor-pointer',
+        isActive
+          ? 'bg-muted border border-border shadow-sm'
+          : 'hover:bg-muted/60'
+      )}
     >
       {/* Left accent bar */}
       <div className={cn('w-1 rounded-full shrink-0 mt-1', sessionBarColor[ride.session_type])} style={{ height: 36 }} />
@@ -50,7 +56,10 @@ export function RideRow({ ride }: RideRowProps) {
       {/* Content */}
       <div className="flex-1 min-w-0 space-y-1">
         {/* Label */}
-        <p className="text-sm font-medium leading-tight truncate group-hover:text-primary transition-colors">
+        <p className={cn(
+          'text-sm font-medium leading-tight truncate transition-colors',
+          isActive ? 'text-primary' : 'group-hover:text-primary'
+        )}>
           {ride.label}
         </p>
 

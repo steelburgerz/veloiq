@@ -3,7 +3,7 @@ import {
   getTitiDaysRemaining,
 } from '@/lib/data'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import { RideRow } from '@/components/RideRow'
+import { SidebarRideList } from '@/components/SidebarRideList'
 import { Bike } from 'lucide-react'
 import Link from 'next/link'
 
@@ -40,15 +40,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <p className="text-xs text-muted-foreground mt-0.5">{rides.length} activities</p>
           </div>
           <div className="flex-1 px-2 py-2">
-            {rides.length > 0 ? (
-              rides.map((ride) => (
-                <RideRow key={`${ride.date}-${ride.strava_id}`} ride={ride} />
-              ))
-            ) : (
-              <div className="py-12 text-center text-muted-foreground text-sm px-4">
-                No rides logged yet
-              </div>
-            )}
+            <SidebarRideList rides={rides} />
           </div>
         </aside>
 

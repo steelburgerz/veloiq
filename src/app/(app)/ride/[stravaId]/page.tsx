@@ -1,7 +1,7 @@
 import { getRideById } from '@/lib/data'
 import { getActivityMap } from '@/lib/strava'
 import { formatDuration, formatSleep } from '@/lib/format'
-import { ZoneChart } from '@/components/ZoneChart'
+import { PowerZoneDonut } from '@/components/PowerZoneDonut'
 import { HrZoneChart } from '@/components/HrZoneChart'
 import { KeyBlocksTable } from '@/components/KeyBlocksTable'
 import { RideAnalysis } from '@/components/RideAnalysis'
@@ -11,10 +11,9 @@ import { DayContext } from '@/components/DayContext'
 import { RideMap } from '@/components/RideMap'
 import { SessionType } from '@/types'
 import {
-  ArrowLeft, Bike, Zap, Heart, Timer, Mountain,
+  Bike, Zap, Heart, Timer, Mountain,
   Flame, TrendingUp, MonitorPlay, Wind, Utensils
 } from 'lucide-react'
-import { ThemeToggle } from '@/components/ThemeToggle'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -77,23 +76,7 @@ export default async function RidePage({ params }: PageProps) {
   ]
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b sticky top-0 bg-background/90 backdrop-blur z-10">
-        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-            <Bike className="h-5 w-5 text-indigo-500" />
-            WheelMate
-          </Link>
-          <ThemeToggle />
-        </div>
-      </nav>
-
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-
-        <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Back to dashboard
-        </Link>
+    <div className="space-y-8">
 
         {/* Header */}
         <div>
@@ -204,7 +187,7 @@ export default async function RidePage({ params }: PageProps) {
               <div>
                 <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Power Zones</h2>
                 <div className="rounded-2xl border p-5">
-                  <ZoneChart zones={ride.zones_power_sec} totalSec={totalZonePowerSec} />
+                  <PowerZoneDonut zones={ride.zones_power_sec} totalSec={totalZonePowerSec} />
                 </div>
               </div>
             )}
@@ -242,7 +225,6 @@ export default async function RidePage({ params }: PageProps) {
           </div>
         )}
 
-      </main>
     </div>
   )
 }
