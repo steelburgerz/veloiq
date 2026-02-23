@@ -89,6 +89,11 @@ export interface Ride {
   gear_id: string | null
   training_load_pct: number | null
   power_hr_ratio: number | null
+  peak_cp_w: number | null
+  peak_ftp_w: number | null
+  peak_ftp_secs: number | null
+  peak_pmax_w: number | null
+  rolling_ftp_w: number | null
   // Training effect
   aerobic_te: number | null
   anaerobic_te: number | null

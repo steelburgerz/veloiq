@@ -65,12 +65,18 @@ export default async function RidePage({ params }: PageProps) {
     ...(ride.calories ? [{ label: 'Calories', value: ride.calories.toLocaleString() }] : []),
   ]
 
+  const fmtSecs = (s: number) => s >= 60 ? `${Math.floor(s/60)}m ${s%60 ? s%60+'s' : ''}`.trim() : `${s}s`
+
   const powerStats = [
-    ...(ride.np_w        ? [{ label: 'NP',        value: `${ride.np_w} W` }] : []),
-    ...(ride.avg_power_w ? [{ label: 'Avg',       value: `${ride.avg_power_w} W` }] : []),
-    ...(ride.max_power_w ? [{ label: 'Max',       value: `${ride.max_power_w} W` }] : []),
-    ...(ride.if          ? [{ label: 'IF',         value: ride.if.toFixed(2) }] : []),
-    ...(ride.carbs_used_g ? [{ label: 'Carbs',    value: `${ride.carbs_used_g} g` }] : []),
+    ...(ride.np_w         ? [{ label: 'NP',          value: `${ride.np_w} W` }] : []),
+    ...(ride.avg_power_w  ? [{ label: 'Avg',         value: `${ride.avg_power_w} W` }] : []),
+    ...(ride.max_power_w  ? [{ label: 'Max',         value: `${ride.max_power_w} W` }] : []),
+    ...(ride.if           ? [{ label: 'IF',           value: ride.if.toFixed(2) }] : []),
+    ...(ride.peak_ftp_w   ? [{ label: 'Peak FTP',    value: `${ride.peak_ftp_w} W` }] : []),
+    ...(ride.peak_cp_w    ? [{ label: 'CP',           value: `${ride.peak_cp_w} W` }] : []),
+    ...(ride.peak_pmax_w  ? [{ label: 'Pmax',         value: `${ride.peak_pmax_w} W` }] : []),
+    ...(ride.peak_ftp_secs ? [{ label: 'FTP Duration', value: fmtSecs(ride.peak_ftp_secs) }] : []),
+    ...(ride.carbs_used_g  ? [{ label: 'Carbs',       value: `${ride.carbs_used_g} g` }] : []),
   ]
 
   const hrStats = [

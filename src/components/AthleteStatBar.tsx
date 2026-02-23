@@ -4,12 +4,13 @@ import { Activity, Zap, TrendingUp, TrendingDown, Weight } from 'lucide-react'
 interface AthleteStatBarProps {
   vo2max: number | null
   eftp: number | null
+  rollingFtp: number | null
   wPrime: number | null
   weight: number | null
   rampRate: number | null
 }
 
-export function AthleteStatBar({ vo2max, eftp, wPrime, weight, rampRate }: AthleteStatBarProps) {
+export function AthleteStatBar({ vo2max, eftp, rollingFtp, wPrime, weight, rampRate }: AthleteStatBarProps) {
   const wkg = eftp && weight ? (eftp / weight).toFixed(2) : null
   const wPrimeKj = wPrime ? (wPrime / 1000).toFixed(1) : null
   const rampOk = rampRate !== null && Math.abs(rampRate) <= 5
@@ -29,6 +30,13 @@ export function AthleteStatBar({ vo2max, eftp, wPrime, weight, rampRate }: Athle
       value: eftp ? `${eftp}W` : '—',
       sub: wkg ? `${wkg} W/kg` : '',
       color: 'text-indigo-600 dark:text-indigo-400',
+    },
+    {
+      icon: Zap,
+      label: 'Rolling FTP',
+      value: rollingFtp ? `${rollingFtp}W` : '—',
+      sub: 'Recent 30d',
+      color: 'text-indigo-500',
     },
     {
       icon: Zap,
@@ -57,7 +65,7 @@ export function AthleteStatBar({ vo2max, eftp, wPrime, weight, rampRate }: Athle
   ]
 
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
       {stats.map(({ icon: Icon, label, value, sub, color }) => (
         <div key={label} className="rounded-xl border bg-muted/20 p-3 text-center">
           <Icon className="h-3.5 w-3.5 text-muted-foreground mx-auto mb-1" />

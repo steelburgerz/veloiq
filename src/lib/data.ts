@@ -135,6 +135,7 @@ export function getAthleteStats() {
   return {
     vo2max: vo2maxRides.length ? vo2maxRides[0].day_vo2max : null,
     eftp: latest?.day_eftp_w ?? null,
+    rollingFtp: latest?.rolling_ftp_w ?? null,
     wPrime: latest?.day_w_prime_j ?? null,
     weight: latest?.day_weight_kg ?? null,
     rampRate: latest?.day_ramp_rate ?? null,

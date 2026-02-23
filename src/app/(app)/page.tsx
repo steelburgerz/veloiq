@@ -51,6 +51,7 @@ export default async function DashboardPage() {
               <AthleteStatBar
                 vo2max={stats.vo2max}
                 eftp={stats.eftp}
+                rollingFtp={stats.rollingFtp}
                 wPrime={stats.wPrime}
                 weight={stats.weight}
                 rampRate={stats.rampRate}
