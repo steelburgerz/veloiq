@@ -253,7 +253,7 @@ export default async function RidePage({ params }: PageProps) {
 
         {/* Zone charts */}
         {(totalZonePowerSec > 0 || totalZoneHrSec > 0) && (
-          <div className={cn('grid gap-6', totalZonePowerSec > 0 && totalZoneHrSec > 0 ? 'lg:grid-cols-2' : 'grid-cols-1')}>
+          <div className="grid grid-cols-1 gap-6">
             {totalZonePowerSec > 0 && ride.zones_power_sec && (
               <div>
                 <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Power Zones</h2>
