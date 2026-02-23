@@ -12,21 +12,37 @@ export function RideMap({ polyline, startLatlng }: RideMapProps) {
   const mapRef = useRef<unknown>(null)
 
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return
+    if (!containerRef.current) return
 
-    let cleanup = () => {}
+    let cancelled = false
+
+    // Destroy any stale Leaflet instance on this container
+    // (happens when navigating quickly between rides before async init completes)
+    const el = containerRef.current as HTMLDivElement & { _leaflet_id?: number }
+    if (el._leaflet_id) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(mapRef.current as any)?.remove()
+      } catch (_) { /* ignore */ }
+      mapRef.current = null
+      delete el._leaflet_id
+    }
 
     async function init() {
-      // Dynamically import — Leaflet needs window
       const L = (await import('leaflet')).default
-
-      // Decode Google-encoded polyline
       const polylinePkg = await import('@mapbox/polyline')
+
+      // Bail if we were cancelled while awaiting imports
+      if (cancelled || !containerRef.current) return
+
       const coords = polylinePkg.default.decode(polyline) as [number, number][]
+      if (!coords.length) return
 
-      if (!coords.length || !containerRef.current) return
+      // One more guard — container may have been re-taken by a later effect
+      const container = containerRef.current as HTMLDivElement & { _leaflet_id?: number }
+      if (container._leaflet_id) return
 
-      const map = L.map(containerRef.current, { zoomControl: true, attributionControl: true })
+      const map = L.map(container, { zoomControl: true, attributionControl: true })
       mapRef.current = map
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -34,7 +50,6 @@ export function RideMap({ polyline, startLatlng }: RideMapProps) {
         maxZoom: 19,
       }).addTo(map)
 
-      // Draw route
       const polylineLayer = L.polyline(coords, {
         color: '#6366f1',
         weight: 3.5,
@@ -42,14 +57,12 @@ export function RideMap({ polyline, startLatlng }: RideMapProps) {
         lineJoin: 'round',
       }).addTo(map)
 
-      // Start marker
       const startIcon = L.divIcon({
         html: `<div style="width:12px;height:12px;border-radius:50%;background:#22c55e;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>`,
         className: '',
         iconAnchor: [6, 6],
       })
 
-      // Finish marker
       const finishIcon = L.divIcon({
         html: `<div style="width:12px;height:12px;border-radius:50%;background:#ef4444;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>`,
         className: '',
@@ -60,15 +73,18 @@ export function RideMap({ polyline, startLatlng }: RideMapProps) {
       L.marker(coords[coords.length - 1], { icon: finishIcon }).addTo(map).bindTooltip('Finish', { permanent: false })
 
       map.fitBounds(polylineLayer.getBounds(), { padding: [24, 24] })
-
-      cleanup = () => {
-        map.remove()
-        mapRef.current = null
-      }
     }
 
     init()
-    return () => cleanup()
+
+    return () => {
+      cancelled = true
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(mapRef.current as any)?.remove()
+      } catch (_) { /* ignore */ }
+      mapRef.current = null
+    }
   }, [polyline])
 
   return (
