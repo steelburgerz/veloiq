@@ -1,4 +1,4 @@
-import { getRideById } from '@/lib/data'
+import { getRideById, getPeakPowerByDate } from '@/lib/data'
 import { getActivityMap } from '@/lib/strava'
 import { formatDuration, formatSleep } from '@/lib/format'
 import { PowerZoneDonut } from '@/components/PowerZoneDonut'
@@ -40,6 +40,7 @@ export default async function RidePage({ params }: PageProps) {
   if (!ride) notFound()
 
   const activityMap = await getActivityMap(stravaId)
+  const ridePBs = getPeakPowerByDate(ride.date)
 
   const dateStr = new Date(ride.date).toLocaleDateString('en-SG', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
@@ -252,6 +253,33 @@ export default async function RidePage({ params }: PageProps) {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Peak Power PBs set on this ride */}
+        {ridePBs.length > 0 && (
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+              Power PBs <span className="text-foreground/40 font-normal normal-case">set on this date</span>
+            </h2>
+            <div className="rounded-2xl border divide-y">
+              {ridePBs.map((pb) => {
+                const LABELS: Record<number, string> = {
+                  5: '5 sec', 15: '15 sec', 30: '30 sec', 60: '1 min',
+                  120: '2 min', 300: '5 min', 600: '10 min',
+                  1200: '20 min', 1800: '30 min', 2400: '40 min', 3600: '1 hr',
+                }
+                const label = LABELS[pb.duration_sec] ?? `${pb.duration_sec}s`
+                return (
+                  <div key={pb.duration_sec} className="flex items-center px-5 py-3 gap-6">
+                    <span className="text-xs text-muted-foreground w-14 shrink-0">{label}</span>
+                    <span className="text-sm font-bold">{pb.power_w} W</span>
+                    <span className="text-sm text-muted-foreground">{pb.power_wkg.toFixed(2)} W/kg</span>
+                    <span className="ml-auto text-xs text-amber-500 font-medium">🏆 All-time best</span>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )}
 

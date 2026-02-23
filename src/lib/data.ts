@@ -141,6 +141,13 @@ export function getAthleteStats() {
   }
 }
 
+export function getPeakPowerByDate(date: string): import('@/types').PeakPowerRecord[] {
+  const all = readNdjson<import('@/types').PeakPowerRecord>(path.join(MEMORY, 'peak_power.ndjson'))
+  return all
+    .filter(r => r.date === date)
+    .sort((a, b) => a.duration_sec - b.duration_sec)
+}
+
 export function getEfTrend(days = 60): import('@/types').EfPoint[] {
   const rides = readNdjson<import('@/types').Ride>(path.join(MEMORY, 'rides.ndjson'))
   const cutoff = new Date()
