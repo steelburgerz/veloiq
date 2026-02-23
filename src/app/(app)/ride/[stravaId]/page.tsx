@@ -10,10 +10,7 @@ import { TrainingEffectBadge } from '@/components/TrainingEffectBadge'
 import { DayContext } from '@/components/DayContext'
 import { RideMap } from '@/components/RideMap'
 import { SessionType } from '@/types'
-import {
-  Bike, Zap, Heart, Timer, Mountain,
-  Flame, TrendingUp, MonitorPlay, Wind, Utensils
-} from 'lucide-react'
+import { Bike, MonitorPlay } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -54,25 +51,37 @@ export default async function RidePage({ params }: PageProps) {
   const totalZoneHrSec = ride.zones_hr_sec
     ? Object.values(ride.zones_hr_sec).reduce((s, v) => s + (v ?? 0), 0) : 0
 
-  const statCards = [
-    { icon: Timer,      label: 'Moving',      value: formatDuration(ride.duration_min) },
-    ...(stopTime && stopTime > 2 ? [{ icon: Timer, label: 'Elapsed', value: formatDuration(movingMin!) }] : []),
-    { icon: Bike,       label: 'Distance',    value: `${ride.distance_km.toFixed(1)}km` },
-    { icon: Mountain,   label: 'Elevation',   value: `${ride.elev_m}m` },
-    ...(ride.elev_high_m ? [{ icon: Mountain, label: 'Peak Alt', value: `${ride.elev_high_m.toFixed(0)}m` }] : []),
-    { icon: Zap,        label: 'NP',          value: ride.np_w ? `${ride.np_w}W` : '—' },
-    { icon: Zap,        label: 'Avg Power',   value: ride.avg_power_w ? `${ride.avg_power_w}W` : '—' },
-    { icon: Zap,        label: 'Max Power',   value: ride.max_power_w ? `${ride.max_power_w}W` : '—' },
-    { icon: Heart,      label: 'Avg HR',      value: ride.avg_hr_bpm ? `${ride.avg_hr_bpm}bpm` : '—' },
-    { icon: Heart,      label: 'Max HR',      value: ride.max_hr_bpm ? `${ride.max_hr_bpm}bpm` : '—' },
-    { icon: Flame,      label: 'Calories',    value: ride.calories ? `${ride.calories.toLocaleString()}` : '—' },
-    { icon: Flame,      label: 'Work',        value: `${ride.work_kj}kJ` },
-    { icon: TrendingUp, label: 'Load',        value: ride.intervals_load ? `${ride.intervals_load}` : '—' },
-    { icon: TrendingUp, label: 'IF',          value: ride.if ? ride.if.toFixed(2) : '—' },
-    { icon: TrendingUp, label: 'TSB',         value: ride.tsb != null ? `${ride.tsb > 0 ? '+' : ''}${ride.tsb.toFixed(1)}` : '—' },
-    ...(ride.suffer_score ? [{ icon: Flame, label: 'Suffer', value: `${ride.suffer_score}` }] : []),
-    ...(ride.avg_respiration_rpm ? [{ icon: Wind, label: 'Breathing', value: `${ride.avg_respiration_rpm.toFixed(1)} rpm` }] : []),
-    ...(ride.carbs_used_g ? [{ icon: Utensils, label: 'Carbs', value: `${ride.carbs_used_g}g`, }] : []),
+  // Grouped stat definitions
+  const summaryStats = [
+    { label: 'Distance',  value: `${ride.distance_km.toFixed(1)} km` },
+    { label: 'Moving',    value: formatDuration(ride.duration_min) },
+    ...(stopTime && stopTime > 2 ? [{ label: 'Elapsed', value: formatDuration(movingMin!) }] : []),
+    { label: 'Elevation', value: `${ride.elev_m} m` },
+    ...(ride.elev_high_m ? [{ label: 'Peak Alt', value: `${ride.elev_high_m.toFixed(0)} m` }] : []),
+    { label: 'Work',      value: `${ride.work_kj} kJ` },
+    ...(ride.calories ? [{ label: 'Calories', value: ride.calories.toLocaleString() }] : []),
+  ]
+
+  const powerStats = [
+    ...(ride.np_w        ? [{ label: 'NP',        value: `${ride.np_w} W` }] : []),
+    ...(ride.avg_power_w ? [{ label: 'Avg',       value: `${ride.avg_power_w} W` }] : []),
+    ...(ride.max_power_w ? [{ label: 'Max',       value: `${ride.max_power_w} W` }] : []),
+    ...(ride.if          ? [{ label: 'IF',         value: ride.if.toFixed(2) }] : []),
+    ...(ride.carbs_used_g ? [{ label: 'Carbs',    value: `${ride.carbs_used_g} g` }] : []),
+  ]
+
+  const hrStats = [
+    ...(ride.avg_hr_bpm ? [{ label: 'Avg HR',     value: `${ride.avg_hr_bpm} bpm` }] : []),
+    ...(ride.max_hr_bpm ? [{ label: 'Max HR',     value: `${ride.max_hr_bpm} bpm` }] : []),
+    ...(ride.suffer_score ? [{ label: 'Suffer',   value: `${ride.suffer_score}` }] : []),
+    ...(ride.avg_respiration_rpm ? [{ label: 'Breathing', value: `${ride.avg_respiration_rpm.toFixed(1)} rpm` }] : []),
+  ]
+
+  const loadStats = [
+    ...(ride.intervals_load ? [{ label: 'Load', value: `${ride.intervals_load}` }] : []),
+    ...(ride.tsb != null    ? [{ label: 'TSB',  value: `${ride.tsb > 0 ? '+' : ''}${ride.tsb.toFixed(1)}` }] : []),
+    ...(ride.ctl            ? [{ label: 'CTL',  value: ride.ctl.toFixed(1) }] : []),
+    ...(ride.atl            ? [{ label: 'ATL',  value: ride.atl.toFixed(1) }] : []),
   ]
 
   return (
@@ -144,15 +153,67 @@ export default async function RidePage({ params }: PageProps) {
           </div>
         )}
 
-        {/* Stats grid */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-          {statCards.map(({ icon: Icon, label, value }) => (
-            <div key={label} className="rounded-xl border bg-muted/20 p-3 text-center">
-              <Icon className="h-3.5 w-3.5 text-muted-foreground mx-auto mb-1" />
-              <p className="text-base font-bold">{value}</p>
-              <p className="text-xs text-muted-foreground">{label}</p>
+        {/* Stats — grouped */}
+        <div className="rounded-2xl border divide-y">
+
+          {/* Ride summary */}
+          <div className="px-5 py-4">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">Ride</p>
+            <div className="flex flex-wrap gap-x-8 gap-y-2">
+              {summaryStats.map(({ label, value }) => (
+                <div key={label}>
+                  <p className="text-xs text-muted-foreground">{label}</p>
+                  <p className="text-sm font-semibold">{value}</p>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          {/* Power */}
+          {powerStats.length > 0 && (
+            <div className="px-5 py-4">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">Power</p>
+              <div className="flex flex-wrap gap-x-8 gap-y-2">
+                {powerStats.map(({ label, value }) => (
+                  <div key={label}>
+                    <p className="text-xs text-muted-foreground">{label}</p>
+                    <p className="text-sm font-semibold">{value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Heart rate */}
+          {hrStats.length > 0 && (
+            <div className="px-5 py-4">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">Heart Rate</p>
+              <div className="flex flex-wrap gap-x-8 gap-y-2">
+                {hrStats.map(({ label, value }) => (
+                  <div key={label}>
+                    <p className="text-xs text-muted-foreground">{label}</p>
+                    <p className="text-sm font-semibold">{value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Training load */}
+          {loadStats.length > 0 && (
+            <div className="px-5 py-4">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">Training Load</p>
+              <div className="flex flex-wrap gap-x-8 gap-y-2">
+                {loadStats.map(({ label, value }) => (
+                  <div key={label}>
+                    <p className="text-xs text-muted-foreground">{label}</p>
+                    <p className="text-sm font-semibold">{value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
         </div>
 
         {/* How you felt that day */}
@@ -189,29 +250,6 @@ export default async function RidePage({ params }: PageProps) {
                 </div>
               </div>
             )}
-          </div>
-        )}
-
-        {/* Load context */}
-        {(ride.ctl || ride.atl || ride.tsb) && (
-          <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Load Context</h2>
-            <div className="rounded-2xl border p-5 grid grid-cols-3 gap-4 text-center">
-              <div>
-                <p className="text-2xl font-bold text-indigo-500">{ride.ctl?.toFixed(1)}</p>
-                <p className="text-xs text-muted-foreground">CTL (Fitness)</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-amber-500">{ride.atl?.toFixed(1)}</p>
-                <p className="text-xs text-muted-foreground">ATL (Fatigue)</p>
-              </div>
-              <div>
-                <p className={cn('text-2xl font-bold', (ride.tsb ?? 0) >= 0 ? 'text-green-500' : 'text-red-500')}>
-                  {(ride.tsb ?? 0) > 0 ? '+' : ''}{ride.tsb?.toFixed(1)}
-                </p>
-                <p className="text-xs text-muted-foreground">TSB (Form)</p>
-              </div>
-            </div>
           </div>
         )}
 
