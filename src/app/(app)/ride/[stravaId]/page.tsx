@@ -1,4 +1,5 @@
 import { getRideById, getPeakPowerByDate } from '@/lib/data'
+import { RidePowerCurve } from '@/components/RidePowerCurve'
 import { getActivityMap } from '@/lib/strava'
 import { formatDuration, formatSleep } from '@/lib/format'
 import { PowerZoneDonut } from '@/components/PowerZoneDonut'
@@ -239,6 +240,16 @@ export default async function RidePage({ params }: PageProps) {
 
         {/* Performance + Environmental metrics */}
         <RideMetrics ride={ride} />
+
+        {/* Power curve */}
+        {ride.peak_power_curve && Object.keys(ride.peak_power_curve).length > 0 && (
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Power Curve</h2>
+            <div className="rounded-2xl border p-5">
+              <RidePowerCurve curve={ride.peak_power_curve} ftp={270} />
+            </div>
+          </div>
+        )}
 
         {/* Zone charts */}
         {(totalZonePowerSec > 0 || totalZoneHrSec > 0) && (

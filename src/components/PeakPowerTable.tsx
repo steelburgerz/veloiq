@@ -22,6 +22,7 @@ export function PeakPowerTable({ records }: PeakPowerTableProps) {
             <th className="text-left py-2 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Duration</th>
             <th className="text-right py-2 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Watts</th>
             <th className="text-right py-2 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">W/kg</th>
+            <th className="text-left py-2 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden sm:table-cell">Ride</th>
             <th className="text-right py-2 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden sm:table-cell">Date</th>
           </tr>
         </thead>
@@ -34,6 +35,9 @@ export function PeakPowerTable({ records }: PeakPowerTableProps) {
                 <td className="py-2 px-2 font-medium">{label}</td>
                 <td className="py-2 px-2 text-right font-bold">{entry.power_w}W</td>
                 <td className="py-2 px-2 text-right text-muted-foreground">{entry.power_wkg.toFixed(2)}</td>
+                <td className="py-2 px-2 text-left text-muted-foreground text-xs hidden sm:table-cell max-w-[180px] truncate">
+                  {entry.activity_label ?? '—'}
+                </td>
                 <td className="py-2 px-2 text-right text-muted-foreground text-xs hidden sm:table-cell">
                   {new Date(entry.date).toLocaleDateString('en-SG', { day: 'numeric', month: 'short' })}
                 </td>

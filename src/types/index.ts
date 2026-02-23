@@ -94,6 +94,7 @@ export interface Ride {
   peak_ftp_secs: number | null
   peak_pmax_w: number | null
   rolling_ftp_w: number | null
+  peak_power_curve: Record<string, number> | null
   // Training effect
   aerobic_te: number | null
   anaerobic_te: number | null
