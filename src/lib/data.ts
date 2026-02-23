@@ -141,5 +141,21 @@ export function getAthleteStats() {
   }
 }
 
+export function getEfTrend(days = 60): import('@/types').EfPoint[] {
+  const rides = readNdjson<import('@/types').Ride>(path.join(MEMORY, 'rides.ndjson'))
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - days)
+  const cutoffStr = cutoff.toISOString().slice(0, 10)
+
+  return rides
+    .filter(r => r.efficiency_factor != null && r.date >= cutoffStr)
+    .map(r => ({
+      date: r.date,
+      ef: r.efficiency_factor!,
+      sessionType: r.session_type,
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+}
+
 export { formatDuration, formatSleep } from './format'
 export { getTitiDaysRemaining } from './titi'

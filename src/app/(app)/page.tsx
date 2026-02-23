@@ -1,7 +1,7 @@
 import {
   getTodayReadiness, getRecentRides, getPeakPower,
   getLoadChartData, getWeekSummaries, getWkgCheckpoints,
-  getEftpTrend, getAthleteStats
+  getEfTrend, getAthleteStats
 } from '@/lib/data'
 import { getTitiDaysRemaining } from '@/lib/titi'
 import { ReadinessCard } from '@/components/ReadinessCard'
@@ -11,7 +11,7 @@ import { PeakPowerTable } from '@/components/PeakPowerTable'
 import { LoadChart } from '@/components/LoadChart'
 import { WeekSummaryStrip } from '@/components/WeekSummaryStrip'
 import { WkgChart } from '@/components/WkgChart'
-import { EftpChart } from '@/components/EftpChart'
+import { EfChart } from '@/components/EfChart'
 import { AthleteStatBar } from '@/components/AthleteStatBar'
 import { Zap, AlertTriangle } from 'lucide-react'
 
@@ -25,7 +25,7 @@ export default async function DashboardPage() {
   const daysToTiti = getTitiDaysRemaining()
   const weeks = getWeekSummaries(6)
   const wkgCheckpoints = getWkgCheckpoints()
-  const eftpTrend = getEftpTrend()
+  const efTrend = getEfTrend(60)
   const stats = getAthleteStats()
   const thisWeek = weeks[0]
   const rampAlert = stats.rampRate !== null && Math.abs(stats.rampRate) > 8
@@ -88,27 +88,19 @@ export default async function DashboardPage() {
               <WeekSummaryStrip weeks={weeks} />
             </div>
 
-            {/* eFTP trend + Training load */}
+            {/* EF trend + Training load */}
             <div className="grid xl:grid-cols-2 gap-6">
               <div>
                 <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-                  eFTP Trend
-                  {stats.eftp && (
-                    <span className="ml-2 text-indigo-600 dark:text-indigo-400 font-bold normal-case text-sm">{stats.eftp}W</span>
+                  Efficiency Factor
+                  {efTrend.length > 0 && (
+                    <span className={`ml-2 font-bold normal-case text-sm ${efTrend[efTrend.length - 1].ef >= 1.35 ? 'text-green-600 dark:text-green-400' : 'text-amber-500'}`}>
+                      {efTrend[efTrend.length - 1].ef.toFixed(2)}
+                    </span>
                   )}
                 </h2>
                 <div className="rounded-2xl border p-5">
-                  {eftpTrend.length > 0 ? (
-                    <>
-                      <EftpChart data={eftpTrend} ftp={270} />
-                      <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1.5"><span className="h-2 w-4 rounded-full bg-indigo-500 inline-block" />eFTP</div>
-                        <div className="flex items-center gap-1.5"><span className="h-2 w-4 rounded-full bg-amber-400 opacity-60 inline-block" />Ramp rate</div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">No eFTP data</div>
-                  )}
+                  <EfChart data={efTrend} />
                 </div>
               </div>
 

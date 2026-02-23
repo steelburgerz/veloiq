@@ -162,3 +162,9 @@ export interface EftpPoint {
   wPrime: number
   rampRate: number | null
 }
+
+export interface EfPoint {
+  date: string
+  ef: number
+  sessionType: string
+}
