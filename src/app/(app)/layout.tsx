@@ -14,7 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const daysToTiti = getTitiDaysRemaining()
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Top nav */}
       <nav className="border-b sticky top-0 bg-background/90 backdrop-blur z-20 shrink-0">
         <div className="h-14 px-4 flex items-center justify-between">
