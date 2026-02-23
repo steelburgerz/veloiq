@@ -170,16 +170,6 @@ export default async function RidePage({ params }: PageProps) {
         {/* Performance + Environmental metrics */}
         <RideMetrics ride={ride} />
 
-        {/* Key blocks */}
-        {ride.key_blocks && ride.key_blocks.length > 0 && (
-          <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-              Key Blocks <span className="text-foreground/40 font-normal normal-case">({ride.key_blocks.length})</span>
-            </h2>
-            <KeyBlocksTable blocks={ride.key_blocks} ftp={270} />
-          </div>
-        )}
-
         {/* Zone charts */}
         {(totalZonePowerSec > 0 || totalZoneHrSec > 0) && (
           <div className={cn('grid gap-6', totalZonePowerSec > 0 && totalZoneHrSec > 0 ? 'lg:grid-cols-2' : 'grid-cols-1')}>
@@ -222,6 +212,16 @@ export default async function RidePage({ params }: PageProps) {
                 <p className="text-xs text-muted-foreground">TSB (Form)</p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Key blocks */}
+        {ride.key_blocks && ride.key_blocks.length > 0 && (
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+              Key Blocks <span className="text-foreground/40 font-normal normal-case">({ride.key_blocks.length})</span>
+            </h2>
+            <KeyBlocksTable blocks={ride.key_blocks} ftp={270} />
           </div>
         )}
 
