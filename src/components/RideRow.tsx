@@ -5,7 +5,9 @@ import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { Bike, MonitorPlay } from 'lucide-react'
 
-const OUTDOOR_GEAR = 'b16927637'
+function isVirtualRide(label: string) {
+  return /zwift|virtualride|virtual ride/i.test(label)
+}
 
 const sessionColors: Record<SessionType, string> = {
   threshold:  'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
@@ -35,7 +37,7 @@ interface RideRowProps {
 }
 
 export function RideRow({ ride, isActive = false }: RideRowProps) {
-  const isOutdoor = ride.gear_id === OUTDOOR_GEAR
+  const isOutdoor = !isVirtualRide(ride.label)
   const dateStr = new Date(ride.date).toLocaleDateString('en-SG', {
     weekday: 'short', day: 'numeric', month: 'short',
   })

@@ -15,7 +15,9 @@ import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-const OUTDOOR_GEAR = 'b16927637'
+function isVirtualRide(label: string) {
+  return /zwift|virtualride|virtual ride/i.test(label)
+}
 
 const sessionColors: Record<SessionType, string> = {
   threshold:  'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
@@ -42,7 +44,7 @@ export default async function RidePage({ params }: PageProps) {
   const dateStr = new Date(ride.date).toLocaleDateString('en-SG', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   })
-  const isOutdoor = ride.gear_id === OUTDOOR_GEAR
+  const isOutdoor = !isVirtualRide(ride.label)
   const movingMin = ride.elapsed_time_sec ? ride.elapsed_time_sec / 60 : null
   const stopTime = movingMin ? Math.max(0, movingMin - ride.duration_min) : null
 
