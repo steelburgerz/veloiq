@@ -8,36 +8,31 @@ const ZONE_COLORS: Record<string, string> = {
   Z4: '#fbbf24', Z5: '#f97316', Z6: '#ef4444', Z7: '#a855f7',
 }
 const ZONE_LABELS: Record<string, string> = {
-  Z1: 'Z1 Recovery', Z2: 'Z2 Aerobic', Z3: 'Z3 Tempo',
-  Z4: 'Z4 Threshold', Z5: 'Z5 VO2', Z6: 'Z6 Anaerobic', Z7: 'Z7 Max',
+  Z1: 'Z1 Recovery',
+  Z2: 'Z2 Aerobic',
+  Z3: 'Z3 Tempo',
+  Z4: 'Z4 SubThreshold',
+  Z5: 'Z5 SuperThreshold',
+  Z6: 'Z6 Aerobic Capacity',
+  Z7: 'Z7 Anaerobic',
 }
 
-// Boundaries as % of max HR
-const HR_ZONE_PCT: Record<string, [number, number]> = {
-  Z1: [50,  60],
-  Z2: [60,  70],
-  Z3: [70,  80],
-  Z4: [80,  90],
-  Z5: [90, 100],
-  Z6: [100,110],
-  Z7: [110, 999],
-}
-
-function hrRange(zone: string, maxHr: number): string {
-  const pct = HR_ZONE_PCT[zone]
-  if (!pct) return ''
-  const lo = Math.round(maxHr * pct[0] / 100)
-  const hi = pct[1] >= 999 ? null : Math.round(maxHr * pct[1] / 100)
-  return hi ? `${lo}–${hi}` : `>${lo}`
+const HR_ZONE_RANGES: Record<string, string> = {
+  Z1: '0–134 bpm',
+  Z2: '135–149 bpm',
+  Z3: '150–155 bpm',
+  Z4: '156–166 bpm',
+  Z5: '167–171 bpm',
+  Z6: '172–176 bpm',
+  Z7: '177–184 bpm',
 }
 
 interface HrZoneChartProps {
   zones: ZonesSec
   totalSec: number
-  maxHr?: number
 }
 
-export function HrZoneChart({ zones, totalSec, maxHr = 177 }: HrZoneChartProps) {
+export function HrZoneChart({ zones, totalSec }: HrZoneChartProps) {
   const data = Object.entries(zones)
     .filter(([k, sec]) => k !== 'SS' && sec && sec > 0)
     .map(([zone, sec]) => ({
@@ -73,7 +68,7 @@ export function HrZoneChart({ zones, totalSec, maxHr = 177 }: HrZoneChartProps) 
           <div key={d.zone} className="flex items-center gap-1.5 text-xs">
             <span className="h-2 w-2 rounded-full shrink-0" style={{ background: ZONE_COLORS[d.zone] ?? '#94a3b8' }} />
             <span className="text-muted-foreground">{d.zone}</span>
-            <span className="text-muted-foreground/60">{hrRange(d.zone, maxHr)} bpm</span>
+            <span className="text-muted-foreground/60">{HR_ZONE_RANGES[d.zone] ?? ''}</span>
             <span className="font-medium text-foreground ml-auto">{d.pct}%</span>
           </div>
         ))}
