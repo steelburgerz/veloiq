@@ -284,7 +284,7 @@ export default async function RidePage({ params }: PageProps) {
                 const LABELS: Record<number, string> = {
                   5: '5 sec', 15: '15 sec', 30: '30 sec', 60: '1 min',
                   120: '2 min', 300: '5 min', 600: '10 min',
-                  1200: '20 min', 1800: '30 min', 2400: '40 min', 3600: '1 hr',
+                  1200: '20 min', 1800: '30 min', 2400: '40 min', 3600: '1 hr', 10800: '3 hr',
                 }
                 const label = LABELS[pb.duration_sec] ?? `${pb.duration_sec}s`
                 return (

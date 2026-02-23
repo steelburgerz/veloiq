@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 const DURATION_LABELS: Record<number, string> = {
   5: '5s', 15: '15s', 30: '30s', 60: '1min',
   120: '2min', 300: '5min', 600: '10min',
-  1200: '20min', 1800: '30min', 2400: '40min', 3600: '1hr'
+  1200: '20min', 1800: '30min', 2400: '40min', 3600: '1hr', 10800: '3hr'
 }
 
 interface PeakPowerTableProps {
