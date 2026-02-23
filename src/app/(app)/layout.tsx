@@ -20,7 +20,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <div className="h-14 px-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg">
             <Bike className="h-5 w-5 text-indigo-500" />
-            WheelMate
+            Wheelmate Dashboard
           </Link>
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <span className="font-medium text-foreground">Ralph</span>
