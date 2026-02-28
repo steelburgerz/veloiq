@@ -75,7 +75,7 @@ export function KeyBlocksTable({ blocks, ftp = 270 }: KeyBlocksTableProps) {
 
         return (
           <div
-            key={i}
+            key={`${i}-${block?.duration_sec || ""}-${block?.avg_power_w || ""}`}
             className={cn(
               'grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-x-4 px-4 py-2.5 border-b last:border-0 items-center',
               'hover:bg-muted/30 transition-colors'

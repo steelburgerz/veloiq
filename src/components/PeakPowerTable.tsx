@@ -27,11 +27,11 @@ export function PeakPowerTable({ records }: PeakPowerTableProps) {
           </tr>
         </thead>
         <tbody>
-          {sorted.map((entry) => {
+          {sorted.map((entry, index) => {
             const label = DURATION_LABELS[entry.duration_sec] ?? `${entry.duration_sec}s`
             const isHighlight = entry.duration_sec >= 300 && entry.duration_sec <= 1200
             return (
-              <tr key={entry.duration_sec} className={cn('border-b last:border-0', isHighlight && 'bg-indigo-50/50 dark:bg-indigo-950/20')}>
+              <tr key={`${entry.duration_sec}-${entry.date}-${entry.source}-${index}`} className={cn('border-b last:border-0', isHighlight && 'bg-indigo-50/50 dark:bg-indigo-950/20')}>
                 <td className="py-2 px-2 font-medium">{label}</td>
                 <td className="py-2 px-2 text-right font-bold">{entry.power_w}W</td>
                 <td className="py-2 px-2 text-right text-muted-foreground">{entry.power_wkg.toFixed(2)}</td>

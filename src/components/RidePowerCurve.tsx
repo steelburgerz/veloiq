@@ -2,7 +2,7 @@
 
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 
-const CURVE_ORDER = ['5s','15s','30s','1min','2min','5min','10min','20min','30min','1hr','3hr']
+const CURVE_ORDER = ['5s','15s','30s','1min','2min','5min','10min','20min','30min','40min','1hr','1.5hr','2hr','3hr']
 
 interface Props {
   curve: Record<string, number>

@@ -61,7 +61,7 @@ export function WeekSummaryStrip({ weeks }: WeekSummaryStripProps) {
               <div className="flex flex-wrap gap-1">
                 {week.rides.map((r, i) => (
                   <span
-                    key={i}
+                    key={`${week.startDate}-${r.date}-${i}`}
                     title={`${r.session_type.replace('_', ' ')} — ${r.date}`}
                     className={cn('h-2 w-2 rounded-full', sessionDots[r.session_type] ?? 'bg-gray-400')}
                   />

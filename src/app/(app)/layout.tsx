@@ -1,17 +1,21 @@
 import {
   getRecentRides,
-  getTitiDaysRemaining,
 } from '@/lib/data'
+import { getTitiDaysRemaining } from '@/lib/titi'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { SidebarRideList } from '@/components/SidebarRideList'
+import { UserMenu } from '@/components/UserMenu'
+import { InstallPrompt } from '@/components/InstallPrompt'
 import { Bike } from 'lucide-react'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const rides = getRecentRides(30)
-  const daysToTiti = getTitiDaysRemaining()
+  const [rides, daysToTiti] = await Promise.all([
+    getRecentRides(30),
+    Promise.resolve(getTitiDaysRemaining()),
+  ])
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
@@ -20,13 +24,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <div className="h-14 px-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg">
             <Bike className="h-5 w-5 text-indigo-500" />
-            Wheelmate Dashboard
+            VeloIQ
           </Link>
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">Ralph</span>
-            <span className="hidden sm:inline">·</span>
-            <span className="hidden sm:inline text-indigo-500 font-semibold">{daysToTiti}d to TiTi</span>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <span className="text-sm text-indigo-500 font-semibold hidden sm:inline">{daysToTiti}d to TiTi</span>
+            <span className="text-sm text-indigo-500 font-semibold sm:hidden">{daysToTiti}d</span>
             <ThemeToggle />
+            <UserMenu />
           </div>
         </div>
       </nav>
@@ -46,11 +50,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
         {/* Right panel */}
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto px-6 py-8">
+          <div className="max-w-5xl mx-auto px-4 py-6">
             {children}
           </div>
         </main>
       </div>
+
+      <InstallPrompt />
     </div>
   )
 }

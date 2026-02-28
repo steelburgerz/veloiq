@@ -113,7 +113,7 @@ export function RideAnalysis({ ride }: { ride: Ride }) {
       {insights.map((ins, i) => {
         const { Icon, cls, bg } = iconMap[ins.type]
         return (
-          <div key={i} className={cn('flex items-start gap-3 rounded-xl border p-3', bg)}>
+          <div key={`${i}-${ins.type}`} className={cn('flex items-start gap-3 rounded-xl border p-3', bg)}>
             <Icon className={cn('h-4 w-4 mt-0.5 shrink-0', cls)} />
             <p className="text-sm">{ins.text}</p>
           </div>

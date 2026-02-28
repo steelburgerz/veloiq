@@ -1,0 +1,33 @@
+{
+  "name": "VeloIQ - Cycling Training Dashboard",
+  "short_name": "VeloIQ",
+  "description": "AI-powered cycling analytics and training dashboard",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["fitness", "sports", "lifestyle"],
+  "screenshots": [
+    {
+      "src": "/images/cycling-ai.jpg",
+      "sizes": "784x1168",
+      "type": "image/jpeg",
+      "form_factor": "narrow"
+    }
+  ]
+}

@@ -37,11 +37,11 @@ interface PageProps {
 
 export default async function RidePage({ params }: PageProps) {
   const { stravaId } = await params
-  const ride = getRideById(stravaId)
+  const ride = await getRideById(stravaId)
   if (!ride) notFound()
 
   const activityMap = await getActivityMap(stravaId)
-  const ridePBs = getPeakPowerByDate(ride.date)
+  const ridePBs = await getPeakPowerByDate(ride.date)
 
   const dateStr = new Date(ride.date).toLocaleDateString('en-SG', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
@@ -280,7 +280,7 @@ export default async function RidePage({ params }: PageProps) {
               Power PBs <span className="text-foreground/40 font-normal normal-case">set on this date</span>
             </h2>
             <div className="rounded-2xl border divide-y">
-              {ridePBs.map((pb) => {
+              {ridePBs.map((pb, idx) => {
                 const LABELS: Record<number, string> = {
                   5: '5 sec', 15: '15 sec', 30: '30 sec', 60: '1 min',
                   120: '2 min', 300: '5 min', 600: '10 min',
@@ -288,7 +288,7 @@ export default async function RidePage({ params }: PageProps) {
                 }
                 const label = LABELS[pb.duration_sec] ?? `${pb.duration_sec}s`
                 return (
-                  <div key={pb.duration_sec} className="flex items-center px-5 py-3 gap-6">
+                  <div key={`${pb.duration_sec}-${idx}`} className="flex items-center px-5 py-3 gap-6">
                     <span className="text-xs text-muted-foreground w-14 shrink-0">{label}</span>
                     <span className="text-sm font-bold">{pb.power_w} W</span>
                     <span className="text-sm text-muted-foreground">{pb.power_wkg.toFixed(2)} W/kg</span>
