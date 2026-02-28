@@ -22,7 +22,7 @@ function toNum(val: unknown): number | null {
 // Helper to convert PostgreSQL date to ISO string
 function toDateStr(val: unknown): string {
   if (val instanceof Date) {
-    return val.toISOString().slice(0, 10)
+    const offsetMs = val.getTimezoneOffset() * 60 * 1000; const localDate = new Date(val.getTime() - offsetMs); return localDate.toISOString().slice(0, 10)
   }
   return String(val)
 }
@@ -289,8 +289,8 @@ export async function getWeekSummaries(weeksBack = 6): Promise<WeekSummary[]> {
     endOfThisWeek.setDate(startOfThisWeek.getDate() + 6)
     endOfThisWeek.setHours(23, 59, 59, 999)
 
-    const startStr = startOfThisWeek.toISOString().slice(0, 10)
-    const endStr = endOfThisWeek.toISOString().slice(0, 10)
+    const startStr = toDateStr(startOfThisWeek)
+    const endStr = toDateStr(endOfThisWeek)
 
     const weekRides = rides.filter(r => r.date >= startStr && r.date <= endStr)
 
