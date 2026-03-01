@@ -378,42 +378,69 @@ export async function getAthleteStats() {
 }
 
 export async function getPeakPowerByDate(date: string): Promise<import('@/types').PeakPowerRecord[]> {
-  const result = await pool.query(`
+  // Get all rides with peak power curves to find actual personal bests
+  const allRides = await pool.query(`
     SELECT 
       date,
       label as activity_label,
       source,
       peak_power_curve
     FROM rides
-    WHERE date = $1 AND peak_power_curve IS NOT NULL
-  `, [date])
+    WHERE peak_power_curve IS NOT NULL
+    ORDER BY date ASC
+  `)
   
-  if (!result.rows.length) return []
+  if (!allRides.rows.length) return []
   
-  const records: PeakPowerRecord[] = []
-  const periodMap: Record<string, string> = {
-    '5': '5s',
-    '15': '15s',
-    '30': '30s',
-    '60': '1min',
-    '300': '5min',
-    '1200': '20min',
-    '3600': '60min',
+  // Track all-time best for each duration
+  const allTimeBests: Record<string, { power: number; date: string; label: string; source: string }> = {}
+  
+  // Map our durations to standard periods
+  const durationMap: Record<string, number> = {
+    '5s': 5, '15s': 15, '30s': 30, '1min': 60, '2min': 120,
+    '5min': 300, '10min': 600, '20min': 1200, '30min': 1800, '1hr': 3600
   }
   
-  const row = result.rows[0]
-  const curve = row.peak_power_curve as Record<string, number>
+  // Process all rides to find all-time bests
+  for (const row of allRides.rows) {
+    const curve = row.peak_power_curve as Record<string, number>
+    const rideDate = toDateStr(row.date)
+    
+    for (const [duration, power] of Object.entries(curve)) {
+      const powerVal = toNum(power) ?? 0
+      if (powerVal <= 0) continue
+      
+      if (!allTimeBests[duration] || powerVal > allTimeBests[duration].power) {
+        allTimeBests[duration] = {
+          power: powerVal,
+          date: rideDate,
+          label: row.activity_label as string,
+          source: row.source as string
+        }
+      }
+    }
+  }
   
-  for (const [duration, power] of Object.entries(curve)) {
-    records.push({
-      period: periodMap[duration] || duration + 's',
-      duration_sec: parseInt(duration),
-      power_w: toNum(power) ?? 0,
-      power_wkg: (toNum(power) ?? 0) / 65,
-      date: toDateStr(row.date),
-      source: row.source as string,
-      activity_label: row.activity_label as string,
-    })
+  // Find which PBs were set on the given date
+  const records: PeakPowerRecord[] = []
+  const periodMap: Record<string, string> = {
+    '5s': '5s', '15s': '15s', '30s': '30s', '1min': '1min', '2min': '2min',
+    '5min': '5min', '10min': '10min', '20min': '20min', '30min': '30min', '1hr': '1hr'
+  }
+  
+  for (const [duration, best] of Object.entries(allTimeBests)) {
+    // Only include if this PB was set on the given date
+    if (best.date === date) {
+      records.push({
+        period: periodMap[duration] || duration,
+        duration_sec: durationMap[duration] || parseInt(duration),
+        power_w: best.power,
+        power_wkg: best.power / 65,
+        date: best.date,
+        source: best.source,
+        activity_label: best.label,
+      })
+    }
   }
   
   return records.sort((a, b) => a.duration_sec - b.duration_sec)
