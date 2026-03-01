@@ -1,14 +1,27 @@
 import { Ride, SessionType, KeyBlock, ZonesSec } from '@/types'
 
 /**
- * Auto-classify ride session type based on power zones and key blocks.
- * This provides a more accurate classification than the generic "mixed" from Intervals.
+ * Auto-classify ride session type based on power zones, key blocks, and Intensity Factor.
+ * 
+ * Classification approach:
+ * 1. Check label for known workout patterns (Zwift, TrainerRoad, etc.)
+ * 2. Use Intensity Factor (IF) as primary guide when available
+ * 3. Use power zone distribution as secondary indicator
+ * 4. Use key blocks for structured workout detection
+ * 
+ * IF ranges for reference (FTP = 270W):
+ * - Recovery: IF < 0.55 (NP < 150W)
+ * - Endurance: IF 0.55-0.75 (NP 150-200W)
+ * - Tempo: IF 0.75-0.85 (NP 200-230W)
+ * - Sweet Spot/Threshold: IF 0.85-0.95 (NP 230-255W)
+ * - VO2max: IF 0.95-1.05 (NP 255-285W)
+ * - Anaerobic: IF > 1.05 (NP > 285W)
  */
 
 interface ZoneTime {
   z1z2: number  // Recovery/Endurance
   z3: number    // Tempo
-  z4: number    // Threshold
+  z4: number    // Threshold/Sweet Spot
   z5z6z7: number // VO2max/Anaerobic
   total: number
 }
@@ -16,7 +29,6 @@ interface ZoneTime {
 function normalizeZones(zones: ZonesSec | null | undefined): ZoneTime {
   if (!zones) return { z1z2: 0, z3: 0, z4: 0, z5z6z7: 0, total: 0 }
   
-  // Handle both object format {Z1: 100, Z2: 200} and array format [{id: "Z1", secs: 100}]
   let z1 = 0, z2 = 0, z3 = 0, z4 = 0, z5 = 0, z6 = 0, z7 = 0
   
   if (Array.isArray(zones)) {
@@ -80,39 +92,67 @@ function getKeyBlockZoneSummary(keyBlocks: KeyBlock[] | null | undefined): {
 }
 
 /**
- * Classify a ride based on its power data, key blocks, and duration.
- * 
- * Classification logic:
- * 1. Race: Check label for race keywords
- * 2. Recovery: Short duration, mostly Z1-Z2
- * 3. Long ride: Duration > 3 hours
- * 4. VO2max: Significant Z5-Z7 time or VO2 key blocks
- * 5. Threshold: Significant Z4 time or threshold key blocks
- * 6. Tempo: Significant Z3 time or tempo key blocks
- * 7. Endurance: Mostly Z1-Z2 with some Z3
- * 8. Mixed: No dominant pattern (fallback)
+ * Check label for known workout patterns
+ */
+function detectWorkoutType(label: string): SessionType | null {
+  const lower = label.toLowerCase()
+  
+  // Race detection
+  if (lower.includes('race') || lower.includes('competition') || lower.includes('event')) {
+    return 'race'
+  }
+  
+  // Workout pattern detection
+  if (lower.includes('vo2') || lower.includes('v02') || lower.includes('5x') || lower.includes('4x') || lower.includes('6x')) {
+    // Check if it's likely VO2 intervals
+    if (lower.includes('vo2') || lower.includes('v02')) return 'vo2'
+    // 4x, 5x, 6x patterns often indicate intervals - check context
+    if (lower.match(/[4-6]x\s*\d/)) {
+      // Could be VO2 or threshold depending on interval length
+      return null // Let zone analysis decide
+    }
+  }
+  
+  // Over/Under workouts are threshold training
+  if (lower.includes('over') && lower.includes('under')) {
+    return 'threshold'
+  }
+  
+  // Sweet spot workouts
+  if (lower.includes('sweet spot') || lower.includes('sweetspot')) {
+    return 'threshold'
+  }
+  
+  // Tempo workouts
+  if (lower.includes('tempo') && !lower.includes('tempo recovery')) {
+    return 'tempo'
+  }
+  
+  // Recovery rides
+  if (lower.includes('recovery') || lower.includes('spin') || lower.includes('cool down')) {
+    return 'recovery'
+  }
+  
+  return null
+}
+
+/**
+ * Classify a ride based on its power data, key blocks, duration, and IF.
  */
 export function classifySession(ride: Partial<Ride>): SessionType {
   const duration = ride.duration_min || 0
   const label = (ride.label || '').toLowerCase()
   const zones = ride.zones_power_sec
   const keyBlocks = ride.key_blocks
+  const ifFactor = ride.if // Intensity Factor (NP/FTP)
   
-  // 1. Check for race in label
-  if (label.includes('race') || label.includes('competition') || label.includes('event')) {
-    return 'race'
-  }
+  // 1. Check for known workout patterns in label
+  const workoutType = detectWorkoutType(label)
+  if (workoutType) return workoutType
   
   // Get zone distribution
   const zoneTime = normalizeZones(zones)
   const keyBlockSummary = getKeyBlockZoneSummary(keyBlocks)
-  
-  // If no power data, fall back to duration-based classification
-  if (zoneTime.total === 0 && keyBlockSummary.total === 0) {
-    if (duration > 180) return 'long_ride'
-    if (duration < 45) return 'recovery'
-    return ride.session_type || 'endurance'
-  }
   
   // Calculate percentages
   const z1z2Pct = zoneTime.total > 0 ? zoneTime.z1z2 / zoneTime.total : 0
@@ -120,70 +160,100 @@ export function classifySession(ride: Partial<Ride>): SessionType {
   const z4Pct = zoneTime.total > 0 ? zoneTime.z4 / zoneTime.total : 0
   const z5z6z7Pct = zoneTime.total > 0 ? zoneTime.z5z6z7 / zoneTime.total : 0
   
-  // Key block percentages
-  const thresholdPct = keyBlockSummary.total > 0 ? keyBlockSummary.threshold / keyBlockSummary.total : 0
-  const vo2Pct = keyBlockSummary.total > 0 ? keyBlockSummary.vo2 / keyBlockSummary.total : 0
-  const tempoPct = keyBlockSummary.total > 0 ? keyBlockSummary.tempo / keyBlockSummary.total : 0
-  
-  // 2. Recovery: Short ride, mostly Z1-Z2
-  if (duration < 60 && z1z2Pct > 0.8) {
+  // 2. Use Intensity Factor as primary guide if available
+  if (ifFactor && ifFactor > 0) {
+    // Long rides with moderate IF should be long_ride
+    if (duration > 180) {
+      if (ifFactor < 0.85) return 'long_ride'
+      // High intensity long ride - could be race or hard group ride
+      if (ifFactor >= 0.90 && z4Pct > 0.20) return 'threshold'
+      if (ifFactor >= 0.95) return 'vo2'
+      return 'long_ride'
+    }
+    
+    // Short rides classified by IF
+    if (duration < 60 && ifFactor < 0.60) return 'recovery'
+    
+    // IF-based classification for structured workouts
+    if (ifFactor >= 0.95) {
+      // Very high intensity - VO2 or anaerobic
+      // Check zone distribution to differentiate
+      if (z5z6z7Pct > 0.10) return 'vo2'
+      if (z4Pct > 0.25) return 'threshold' // Might be long threshold intervals
+      return 'vo2'
+    }
+    
+    if (ifFactor >= 0.85) {
+      // Threshold/Sweet Spot zone
+      return 'threshold'
+    }
+    
+    if (ifFactor >= 0.75) {
+      // Tempo zone
+      if (z3Pct > 0.30) return 'tempo'
+      if (z4Pct > 0.15) return 'threshold' // Tempo with some threshold
+      return 'tempo'
+    }
+    
+    if (ifFactor >= 0.55) {
+      // Endurance zone
+      return 'endurance'
+    }
+    
+    // Low IF - recovery
     return 'recovery'
   }
   
-  // 3. Long ride: Duration > 3 hours
-  // But classify based on intensity if there's significant high-zone work
-  if (duration > 180) {
-    // If there's substantial high-intensity work, classify accordingly
-    if (vo2Pct > 0.3 || z5z6z7Pct > 0.15) {
-      return 'vo2'
-    }
-    if (thresholdPct > 0.3 || z4Pct > 0.15) {
-      return 'threshold'
-    }
-    // For long rides with mixed intensity, still call it long_ride
-    return 'long_ride'
-  }
+  // 3. Fall back to zone-based classification if no IF
   
-  // 4. VO2max: Significant Z5-Z7 work
-  // Key blocks in VO2 zone or significant Z5-Z7 time
-  if (keyBlockSummary.vo2 > 300 || // 5+ min of VO2 key blocks
-      vo2Pct > 0.4 ||
-      z5z6z7Pct > 0.12) {
-    return 'vo2'
-  }
-  
-  // 5. Threshold: Significant Z4 work
-  if (keyBlockSummary.threshold > 600 || // 10+ min of threshold key blocks
-      thresholdPct > 0.4 ||
-      z4Pct > 0.2) {
-    return 'threshold'
-  }
-  
-  // 6. Tempo: Significant Z3 work
-  if (keyBlockSummary.tempo > 900 || // 15+ min of tempo key blocks
-      tempoPct > 0.5 ||
-      z3Pct > 0.35) {
-    return 'tempo'
-  }
-  
-  // 7. Endurance: Mostly Z1-Z2
-  if (z1z2Pct > 0.6 && z4Pct < 0.05 && z5z6z7Pct < 0.03) {
+  // If no power data, use duration
+  if (zoneTime.total === 0 && keyBlockSummary.total === 0) {
+    if (duration > 180) return 'long_ride'
+    if (duration < 45) return 'recovery'
     return 'endurance'
   }
   
-  // 8. Mixed: No dominant pattern - try to give a best guess
-  // If there's meaningful intensity, classify by dominant zone
-  if (z4Pct > z3Pct && z4Pct > z5z6z7Pct) {
-    return 'threshold'
+  // Recovery: Short ride, mostly Z1-Z2
+  if (duration < 60 && z1z2Pct > 0.85) {
+    return 'recovery'
   }
-  if (z5z6z7Pct > z3Pct && z5z6z7Pct > z4Pct) {
+  
+  // Long ride: Duration > 3 hours
+  if (duration > 180) {
+    // Only classify as intensity workout if there's substantial structured work
+    if (keyBlockSummary.vo2 > 600 || z5z6z7Pct > 0.15) return 'vo2'
+    if (keyBlockSummary.threshold > 900 || z4Pct > 0.30) return 'threshold'
+    return 'long_ride'
+  }
+  
+  // VO2max: Significant Z5-Z7 work
+  if (keyBlockSummary.vo2 > 240 || // 4+ min of VO2 key blocks
+      z5z6z7Pct > 0.10) {
     return 'vo2'
   }
-  if (z3Pct > 0.15) {
+  
+  // Threshold: Significant Z4 work
+  if (keyBlockSummary.threshold > 600 || // 10+ min of threshold key blocks
+      z4Pct > 0.18) {
+    return 'threshold'
+  }
+  
+  // Tempo: Significant Z3 work
+  if (keyBlockSummary.tempo > 900 || // 15+ min of tempo key blocks
+      z3Pct > 0.30) {
     return 'tempo'
   }
   
-  return 'mixed'
+  // Endurance: Mostly Z1-Z2
+  if (z1z2Pct > 0.60) {
+    return 'endurance'
+  }
+  
+  // Mixed intensity - check dominant zone
+  if (z4Pct > 0.10) return 'threshold'
+  if (z3Pct > 0.15) return 'tempo'
+  
+  return 'endurance'
 }
 
 /**
